@@ -14,12 +14,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
 $error_msg = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
     $url = "http://localhost/gym_class/Services/schedule_service.php";
-    
+
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $_POST); 
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $_POST);
     $response = curl_exec($ch);
-    
+
     if (curl_errno($ch)) {
         $error_msg = "Connection Error: " . curl_error($ch);
     } else {
@@ -35,8 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     curl_close($ch);
 }
 
-// get new class
-$schedules = Schedule::getAll();
+// get new class via web service
+$serviceUrl = "http://localhost/gym_class/Services/Schedule_service.php";
+$ch = curl_init($serviceUrl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
+curl_close($ch);
+
+$schedules = json_decode($response, true) ?: [];
 ?>
 
 <!DOCTYPE html>
@@ -50,13 +56,43 @@ $schedules = Schedule::getAll();
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
         <style>
-            body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); min-height: 100vh; padding: 40px 0; }
-            .card { border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); background: white; overflow: hidden; }
-            .text-purple { color: #6f42c1 !important; }
-            .btn-purple { background: #6f42c1; color: white; border-radius: 10px; padding: 10px 20px; transition: 0.3s; }
-            .btn-purple:hover { background: #59359a; color: white; transform: translateY(-2px); }
-            .back-link { text-decoration: none; color: rgba(255,255,255,0.8); margin-bottom: 20px; display: inline-block; }
-            .back-link:hover { color: white; }
+            body {
+                font-family: 'Poppins', sans-serif;
+                background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+                min-height: 100vh;
+                padding: 40px 0;
+            }
+            .card {
+                border-radius: 20px;
+                border: none;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                background: white;
+                overflow: hidden;
+            }
+            .text-purple {
+                color: #6f42c1 !important;
+            }
+            .btn-purple {
+                background: #6f42c1;
+                color: white;
+                border-radius: 10px;
+                padding: 10px 20px;
+                transition: 0.3s;
+            }
+            .btn-purple:hover {
+                background: #59359a;
+                color: white;
+                transform: translateY(-2px);
+            }
+            .back-link {
+                text-decoration: none;
+                color: rgba(255,255,255,0.8);
+                margin-bottom: 20px;
+                display: inline-block;
+            }
+            .back-link:hover {
+                color: white;
+            }
         </style>
     </head>
     <body>
