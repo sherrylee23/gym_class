@@ -10,8 +10,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
     exit();
 }
 
+// get trainer from web service
+$trainerApiUrl = "http://localhost/gym_class/Services/Schedule_service.php?fetch=trainers";
+$ch_t = curl_init($trainerApiUrl);
+curl_setopt($ch_t, CURLOPT_RETURNTRANSFER, true);
+$t_response = curl_exec($ch_t);
+curl_close($ch_t);
 
-$trainers = Trainer::getAll();
+$trainers = json_decode($t_response, true) ?: [];
 ?>
 
 <!DOCTYPE html>
