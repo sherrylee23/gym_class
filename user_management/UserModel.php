@@ -38,6 +38,14 @@ class UserModel {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    // find by id
+    public function findUserById($id) {
+        $db = getDBConnection();
+        $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     // 2.1.3 Manage Profile
     public function updateProfile($id, $name, $phone, $password = null) {
         if (!empty($password)) {
