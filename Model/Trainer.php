@@ -7,7 +7,7 @@ class Trainer {
     public $full_name;
     public $specialty;
 
-    // get trainer
+    // get all trainer
     public static function getAll() {
         $db = getDBConnection();
         $stmt = $db->query("SELECT id, full_name, specialty FROM trainers");
