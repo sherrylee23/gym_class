@@ -11,7 +11,6 @@ class Trainer {
     public static function getAll() {
         $db = getDBConnection();
         $stmt = $db->query("SELECT id, full_name, specialty FROM trainers");
-        // 返回对象数组，而不是纯数组，这更符合 ORM 的定义
         return $stmt->fetchAll(PDO::FETCH_CLASS, 'Trainer');
     }
 
@@ -26,7 +25,7 @@ class Trainer {
     
     public static function create($userId, $fullName) {
         $db = getDBConnection();
-        // 使用 INSERT IGNORE 防止重复插入同一个 ID
+        // ignore when duplicate id
         $stmt = $db->prepare("INSERT IGNORE INTO trainers (id, full_name, specialty) VALUES (?, ?, 'General Fitness')");
         return $stmt->execute([$userId, $fullName]);
     }

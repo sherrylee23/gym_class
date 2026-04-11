@@ -1,4 +1,6 @@
 <?php
+require_once('../Model/Trainer.php');
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -8,7 +10,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
     exit();
 }
 
-require_once('../Model/Trainer.php');
+
 $trainers = Trainer::getAll();
 ?>
 

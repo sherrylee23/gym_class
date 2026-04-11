@@ -10,12 +10,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
     exit();
 }
 
-// ==========================================
-// 核心修改 1: 处理删除逻辑 (cURL 转发)
-// ==========================================
+// delete
 $error_msg = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
-    // 确保路径包含 "Source Files" 且经过编码
     $url = "http://localhost/gym_class/Services/schedule_service.php";
     
     $ch = curl_init($url);
@@ -28,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         $result = json_decode($response);
         if (isset($result->status) && $result->status == "success") {
-            // 删除成功后，跳转回本页刷新，并带上成功标记
+            // refresh page
             header("Location: trainer_manage_schedule.php?msg=deleted");
             exit();
         } else {
@@ -38,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     curl_close($ch);
 }
 
-// 获取最新的排课列表
+// get new class
 $schedules = Schedule::getAll();
 ?>
 

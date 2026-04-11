@@ -13,7 +13,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
-    // --- 逻辑 B：删除操作 ---
+    // delete class
     if (isset($_POST['action']) && $_POST['action'] === 'delete') {
         $id = $_POST['schedule_id'];
         if (Schedule::delete($id)) {
@@ -24,7 +24,7 @@ if ($method === 'POST') {
         exit();
     }
 
-    // --- 逻辑 C：添加操作 ---
+    // add class
     if (isset($_POST['class_name'])) {
         $t_id  = $_POST['trainer_id'];
         $name  = $_POST['class_name'];
@@ -33,23 +33,22 @@ if ($method === 'POST') {
         $end   = $_POST['end_time'];
         $max   = isset($_POST['max_capacity']) ? $_POST['max_capacity'] : 20;
 
-        // 1. 基础验证：时间顺序
+        // check time validation
         if (strtotime($end) <= strtotime($start)) {
             echo json_encode(['status' => 'error', 'message' => 'End time must be after start time.']);
             exit();
         }
 
-        // 2. 冲突检查：拦截重复课程
+        // handle duplicate class and time
         if (Schedule::isConflict($name, $date, $start, $end)) {
             echo json_encode([
                 'status' => 'error', 
                 'message' => "Sorry, A $name class already exists at this time slot."
             ]);
-            // 【核心修改点】：发现冲突后必须立即 exit()，否则代码会继续执行下方的 save()
             exit(); 
         } 
         
-        // 3. 执行保存：只有在没有冲突的情况下才会运行到这里
+        // save
         $newSched = new Schedule();
         $newSched->trainer_id = $t_id;
         $newSched->class_name = $name;

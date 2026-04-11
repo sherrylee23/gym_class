@@ -21,16 +21,10 @@ class Schedule {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * 修改点：更加严谨的冲突检查逻辑
-     * 解决同一时间段、同一课程名重复的问题
-     */
+
     public static function isConflict($class_name, $date, $start, $end) {
         $db = getDBConnection();
-        
-        // 使用更稳健的时间重叠算法：
-        // 只要 (已有课程开始 < 新课程结束) 并且 (已有课程结束 > 新课程开始)
-        // 就能捕捉到所有的重叠情况（完全包含、部分重叠、完全一致）
+        // make sure not in the same class and same time
         $sql = "SELECT COUNT(*) FROM schedules 
                 WHERE class_name = ? 
                 AND class_date = ? 
@@ -38,11 +32,7 @@ class Schedule {
                 
         $stmt = $db->prepare($sql);
         
-        // 参数对应关系：
-        // ?1 -> 课程名
-        // ?2 -> 日期
-        // ?3 -> 想要预订的 结束时间 ($end)
-        // ?4 -> 想要预订的 开始时间 ($start)
+
         $stmt->execute([$class_name, $date, $end, $start]);
         
         return $stmt->fetchColumn() > 0;

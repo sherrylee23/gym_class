@@ -165,9 +165,7 @@ try {
             const trainer = card.getAttribute('data-trainer');
             const date = card.getAttribute('data-date');
 
-            // 检查文本匹配（类名或教练名）
             const matchesText = name.includes(searchText) || trainer.includes(searchText);
-            // 检查日期匹配（如果没选日期则默认为真）
             const matchesDate = filterDate === "" || date === filterDate;
 
             if (matchesText && matchesDate) {
@@ -178,7 +176,6 @@ try {
             }
         });
 
-        // 如果没有匹配结果，显示提示
         if (visibleCount === 0) {
             noResults.classList.remove('d-none');
         } else {
@@ -186,11 +183,9 @@ try {
         }
     }
 
-    // 监听输入和日期选择事件
     classSearch.addEventListener('input', filterCards);
     dateFilter.addEventListener('change', filterCards);
 
-    // 清除筛选
     function clearFilters() {
         classSearch.value = "";
         dateFilter.value = "";
