@@ -111,7 +111,9 @@ $role = $_SESSION['role'];
                                     <h5 class="fw-bold text-purple"><i class="bi bi-activity me-2"></i>Available Services</h5>
                                     <p class="text-muted small">Access your personalized gym member tools here.</p>
                                     <div class="d-flex gap-2 mt-3">
-                                        <button class="btn btn-purple"><i class="bi bi-calendar-plus me-2"></i>Book Class</button>
+                                        <a href="/gym_class/View/user_view_schedule.php" class="btn btn-purple mt-2">
+                                            <i class="bi bi-calendar-plus me-2"></i>Book Class
+                                        </a>
                                         <button class="btn btn-outline-dark"><i class="bi bi-wallet2 me-2"></i>Pay Fees</button>
                                     </div>
 
@@ -125,7 +127,10 @@ $role = $_SESSION['role'];
                                 <?php elseif ($role == 'Trainer'): ?>
                                     <h5 class="fw-bold text-purple"><i class="bi bi-calendar3 me-2"></i>Training Schedule</h5>
                                     <p class="text-muted small">Your upcoming sessions and assigned members are listed here.</p>
-                                    <button class="btn btn-purple mt-2"><i class="bi bi-list-check me-2"></i>View Schedule</button>
+
+                                    <a href="/gym_class/View/trainer_manage_schedule.php" class="btn btn-purple mt-2">
+                                        <i class="bi bi-list-check me-2"></i>View Schedule
+                                    </a>
                                 <?php endif; ?>
                             </div>
 

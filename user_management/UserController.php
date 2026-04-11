@@ -101,6 +101,15 @@ class UserController {
         $result = $this->model->updateRole($userId, $newRole);
 
         if ($result) {
+            // check is change to trainer
+            if ($newRole === 'Trainer') {
+                require_once('../Model/Trainer.php');
+
+                $user = $this->model->findUserById($userId);
+                if ($user) {
+                    Trainer::create($userId, $user['full_name']);
+                }
+            }
             // Redirect back to the user list with a success message
             header("Location: DisplayUsers.php?status=updated");
             exit;
