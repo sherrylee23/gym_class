@@ -8,8 +8,23 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
     exit();
 }
 
-$bookingModel = new BookingModel();
-$allBookings = $bookingModel->getAllBookings();
+function fetchAllBookingsForAdmin() {
+    // This is the direct link you can copy and paste into your browser
+    $url = "http://localhost/gym_class/Services/Booking_info_service.php?user_id=admin_view_all";
+    
+    // Fetch JSON data from the service URL [cite: 220]
+    $response = @file_get_contents($url);
+    
+    if ($response === false) {
+        return [];
+    }
+    
+    // Turn the JSON string into a PHP array [cite: 221]
+    return json_decode($response, true);
+}
+
+// Now you call the SERVICE instead of the Model directly
+$allBookings = fetchAllBookingsForAdmin();
 ?>
 
 <!DOCTYPE html>
