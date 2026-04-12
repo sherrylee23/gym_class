@@ -1,3 +1,4 @@
+trainer_add_schedule
 <?php
 require_once('../Model/Trainer.php');
 
