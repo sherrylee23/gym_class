@@ -3,8 +3,12 @@ session_start();
 require_once('../user_management/Database.php');
 require_once('../Model/Schedule.php');
 
+// Get current user ID for personal booking status (Requirement 2.2.2)
+$currentUserId = $_SESSION['user_id'] ?? 0;
+
 try {
-    $schedules = Schedule::getAll();
+    // This calls the updated model logic that returns 'available_slots', 'user_booked', and 'time_conflict'
+    $schedules = Schedule::getAll($currentUserId);
 } catch (Exception $e) {
     $schedules = [];
     $error_msg = "Error loading schedules: " . $e->getMessage();
@@ -26,14 +30,9 @@ try {
             color: white; padding: 50px 0; margin-bottom: 40px;
             border-radius: 0 0 30px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        /* 筛选栏样式 */
         .filter-section {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: -30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: none;
+            background: white; border-radius: 15px; padding: 20px;
+            margin-top: -30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none;
         }
         .class-card {
             border: none; border-radius: 15px; background: white;
@@ -52,6 +51,7 @@ try {
         .info-item i { color: #6f42c1; margin-right: 8px; width: 20px; }
         .class-name { color: #333; font-weight: 700; margin-bottom: 15px; }
         .text-purple { color: #6f42c1; }
+        .slot-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -60,9 +60,14 @@ try {
     <div class="container">
         <h1 class="display-5 fw-bold mt-2">Pick Your Perfect Class</h1>
         <p class="lead opacity-75">Your fitness journey starts with one click.</p>
-        <a href="../user_management/profile.php" class="btn btn-outline-light btn-sm mt-3">
-            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
-        </a>
+        <div class="d-flex justify-content-center gap-2 mt-3">
+            <a href="../user_management/profile.php" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+            <a href="view_my_bookings.php" class="btn btn-light text-purple btn-sm fw-bold shadow-sm">
+                <i class="bi bi-calendar-check me-1"></i> View My Bookings
+            </a>
+        </div>
     </div>
 </div>
 
@@ -107,7 +112,12 @@ try {
                     
                     <div class="card class-card h-100 p-3">
                         <div class="card-body d-flex flex-column">
-                            <h4 class="class-name"><?php echo htmlspecialchars($row['class_name']); ?></h4>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h4 class="class-name mb-0"><?php echo htmlspecialchars($row['class_name']); ?></h4>
+                                <span class="badge slot-badge bg-info text-dark">
+                                    <i class="bi bi-people-fill me-1"></i><?php echo $row['available_slots']; ?> Left
+                                </span>
+                            </div>
                             
                             <div class="info-item">
                                 <i class="bi bi-person-badge"></i>
@@ -125,9 +135,20 @@ try {
                             </div>
 
                             <div class="mt-auto pt-4">
-                                <a href="booking.php?id=<?php echo $row['id']; ?>" class="btn btn-purple w-100">
-                                    <i class="bi bi-check2-circle me-2"></i>Book Now
-                                </a>
+                                <?php if ($row['user_booked'] > 0): ?>
+                                    <button class="btn btn-secondary w-100" disabled style="cursor: not-allowed;">
+                                        <i class="bi bi-bookmark-check-fill me-2"></i>ALREADY BOOKED
+                                    </button>
+                                <?php elseif (isset($row['time_conflict']) && $row['time_conflict'] > 0): ?>
+                                    <button class="btn btn-outline-danger w-100" disabled style="cursor: not-allowed; border-style: dashed;">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>TIME CONFLICT
+                                    </button>
+                                    <small class="text-danger d-block text-center mt-1" style="font-size: 0.7rem;">Overlaps with your schedule</small>
+                                <?php else: ?>
+                                    <a href="booking.php?id=<?php echo $row['id']; ?>" class="btn btn-purple w-100">
+                                        <i class="bi bi-check2-circle me-2"></i>Book Now
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -137,7 +158,7 @@ try {
             <div class="col-12 text-center py-5">
                 <div class="bg-white p-5 rounded-4 shadow-sm">
                     <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-                    <p class="mt-3 text-muted">No classes are currently available.</p>
+                    <p class="mt-3 text-muted">No classes with available slots are currently scheduled.</p>
                 </div>
             </div>
         <?php endif; ?>
