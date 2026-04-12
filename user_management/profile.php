@@ -111,10 +111,16 @@ $role = $_SESSION['role'];
                                     <h5 class="fw-bold text-purple"><i class="bi bi-activity me-2"></i>Available Services</h5>
                                     <p class="text-muted small">Access your personalized gym member tools here.</p>
                                     <div class="d-flex gap-2 mt-3">
-                                        <a href="/gym_class/View/user_view_schedule.php" class="btn btn-purple mt-2">
+                                        <a href="http://localhost/gym_class/View/user_view_schedule.php" class="btn btn-purple mt-2">
                                             <i class="bi bi-calendar-plus me-2"></i>Book Class
                                         </a>
-                                        <button class="btn btn-outline-dark"><i class="bi bi-wallet2 me-2"></i>Pay Fees</button>
+                                        <a href="http://localhost/gym_class/View/viewPlans.php" class="btn btn-outline-dark mt-2 fw-bold">
+                                            <i class="bi bi-wallet2 me-2"></i>Pay Memberships
+                                        </a>
+
+                                        <a href="/gym_class/View/viewHistory.php" class="btn btn-outline-secondary mt-2">
+                                            <i class="bi bi-clock-history me-2"></i>Payment History
+                                        </a>
                                     </div>
 
                                 <?php elseif ($role == 'Admin'): ?>
