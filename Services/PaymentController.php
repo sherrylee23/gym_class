@@ -54,28 +54,36 @@ class PaymentController {
         // 2. Execute the payment strategy
         if ($processor->pay($amount)) {
             
-            // 3. Get plan details (Using Array Syntax since we removed ORM)
+            // 3. Get plan details
             $plan = $this->model->getPlanById($planId);
             $durationMonths = $plan['duration_months']; 
 
-            // 4. Calculate new expiry date
+            // 4. Calculate new expiry date AND dynamically set the Payment Type
             $currentExpiry = $this->model->getUserExpiryDate($memberId);
             $today = new DateTime();
+            $paymentType = ''; // We will set this below
             
-            if (empty($currentExpiry) || new DateTime($currentExpiry) < $today) {
-                // Completely expired or new
+            if (empty($currentExpiry)) {
+                // Brand new user (Never had a membership)
                 $newExpiry = $today->modify("+$durationMonths months")->format('Y-m-d');
+                $paymentType = 'New Registration';
+            } else if (new DateTime($currentExpiry) < $today) {
+                // Completely expired membership
+                $newExpiry = $today->modify("+$durationMonths months")->format('Y-m-d');
+                $paymentType = 'Renewal / Upgrade';
             } else {
                 // Add time to existing active membership
                 $expiryDate = new DateTime($currentExpiry);
                 $newExpiry = $expiryDate->modify("+$durationMonths months")->format('Y-m-d');
+                $paymentType = 'Renewal / Upgrade';
             }
 
             // 5. Update user and save transaction
             $this->model->updateUserExpiryDate($memberId, $newExpiry);
             $_SESSION['membership_expiry_date'] = $newExpiry; // Update session
 
-            return $this->model->savePayment($memberId, $planId, 'Membership', $amount, $method);
+            // FIXED: Pass the dynamic $paymentType instead of the hardcoded 'Membership' string
+            return $this->model->savePayment($memberId, $planId, $paymentType, $amount, $method);
         }
         
         return false;
