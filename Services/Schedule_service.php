@@ -7,6 +7,14 @@ header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    // FIX: Check if the consumer is specifically asking for the trainers list
+    if (isset($_GET['fetch']) && $_GET['fetch'] === 'trainers') {
+        $trainers = Trainer::getAll();
+        echo json_encode($trainers ?: []);
+        exit();
+    }
+
+    // Default: Fetch all schedules
     $schedules = Schedule::getAll();
     echo json_encode($schedules ?: []);
     exit();

@@ -36,15 +36,14 @@ class BookingModel {
     /**
      * Requirement 2.2.4: View My Bookings
      * Retrieves all reservations for a specific member with full class and trainer details.
-     * FIXED: Added s.end_time to ensure the view displays the full duration.
      */
     public function getMemberBookings($userId) {
         $db = getDBConnection();
-        // JOINs are used to pull details from schedules and trainers tables
+        // FIXED: Changed t.id to t.trainer_id in the LEFT JOIN
         $sql = "SELECT DISTINCT b.booking_id, b.status, s.class_name, s.class_date, s.start_time, s.end_time, t.full_name as trainer_name 
                 FROM bookings b
                 JOIN schedules s ON b.schedule_id = s.id
-                LEFT JOIN trainers t ON s.trainer_id = t.id
+                LEFT JOIN trainers t ON s.trainer_id = t.trainer_id
                 WHERE b.user_id = ?
                 ORDER BY s.class_date DESC, s.start_time DESC";
                 
@@ -67,16 +66,15 @@ class BookingModel {
     /**
      * Requirement: Admin Manage Bookings
      * Joins bookings with users, schedules, and trainers for a complete overview.
-     * FIXED: Added s.end_time for the admin dashboard consistency.
      */
     public function getAllBookings() {
         $db = getDBConnection();
-        // Logic: Pull member name from users table and class details from schedules
+        // FIXED: Changed t.id to t.trainer_id in the LEFT JOIN
         $sql = "SELECT DISTINCT b.booking_id, b.status, u.full_name as member_name, s.class_name, s.class_date, s.start_time, s.end_time, t.full_name as trainer_name 
                 FROM bookings b
                 JOIN users u ON b.user_id = u.id
                 JOIN schedules s ON b.schedule_id = s.id
-                LEFT JOIN trainers t ON s.trainer_id = t.id
+                LEFT JOIN trainers t ON s.trainer_id = t.trainer_id
                 ORDER BY s.class_date DESC, s.start_time DESC";
                 
         $stmt = $db->query($sql);
