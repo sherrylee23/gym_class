@@ -17,8 +17,7 @@ if (empty($class_id) || $class_id == 0) {
 
 // 3. Fetch Class Data
 $db = getDBConnection();
-$stmt = $db->prepare("SELECT s.*, t.full_name as trainer_name FROM schedules s JOIN trainers t ON s.trainer_id = t.id WHERE s.id = ?");
-$stmt->execute([$class_id]);
+$stmt = $db->prepare("SELECT s.*, t.full_name as trainer_name FROM schedules s JOIN trainers t ON s.trainer_id = t.trainer_id WHERE s.id = ?");$stmt->execute([$class_id]);
 $class = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$class) {
