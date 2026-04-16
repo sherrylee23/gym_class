@@ -41,7 +41,8 @@ class Schedule {
                 ) as time_conflict
 
                 FROM schedules s 
-                LEFT JOIN trainers t ON s.trainer_id = t.id
+                /* FIXED: Changed t.id to t.trainer_id */
+                LEFT JOIN trainers t ON s.trainer_id = t.trainer_id
                 
                 WHERE 
                     /* FILTER A: Capacity Check - Only show if slots are greater than 0 */
