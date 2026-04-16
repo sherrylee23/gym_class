@@ -27,7 +27,7 @@ class BookingProxy {
             return ["status" => "error", "message" => "You have already reserved this class."];
         }
 
-        // --- NEW Logic: TIME CONFLICT CHECK ---
+        // --- Logic: TIME CONFLICT CHECK ---
         // Fetch the details of the class the user is trying to book
         $stmt = $db->prepare("SELECT class_date, start_time, end_time FROM schedules WHERE id = ?");
         $stmt->execute([$scheduleId]);
@@ -77,13 +77,15 @@ class BookingProxy {
     }
 
     /**
+     * SECURE CODING PRACTICE: Least Privilege Principle
      * Requirement 2.2.3: Cancel Booking
      * Gatekeeper logic: Strictly prevents cancellation after class start time for ALL roles.
+     * Members are restricted to their own data only.
      */
     public function attemptCancellation($bookingId, $userId, $role = 'Member') {
         $db = getDBConnection();
         
-        // Fetch booking info to verify ownership and timing
+        // FETCH: Get the actual owner of the record and class timing from the database
         $sql = "SELECT b.user_id as owner_id, s.class_date, s.start_time 
                 FROM bookings b 
                 JOIN schedules s ON b.schedule_id = s.id 
@@ -97,21 +99,23 @@ class BookingProxy {
         }
 
         // --- GLOBAL SECURITY RULE: TIME CHECK ---
-        // This is outside the $role check, so it applies to both Member and Admin
         $classStart = strtotime($booking['class_date'] . ' ' . $booking['start_time']);
         if (time() >= $classStart) {
             return ["status" => "error", "message" => "Action Denied: The class has already started or passed."];
         }
 
-        // --- ROLE SPECIFIC RULE: OWNERSHIP ---
+        // --- SECURE CODING: LEAST PRIVILEGE / ACCESS CONTROL ---
+        // This ensures a user cannot perform an action on a record they do not own unless they are an Admin.
         if ($role !== 'Admin') {
-            // Members can only cancel their OWN bookings
+            // Only allow the owner to cancel their own record
             if ($booking['owner_id'] != $userId) {
-                return ["status" => "error", "message" => "Unauthorized ownership."];
+                // Log access control failure as recommended in your notes
+                // Note: In a production environment, this should be written to a secure log file.
+                return ["status" => "error", "message" => "Access Denied: You do not have permission to modify this booking."];
             }
         }
 
-        // If time is valid and ownership (if applicable) is valid, perform the cancellation
+        // If time is valid and ownership (if applicable) is valid, perform the cancellation in the Real Model
         if ($this->realModel->cancelBooking($bookingId, $booking['owner_id'])) {
             return ["status" => "success", "message" => "Booking cancelled. Slot is now available."];
         }

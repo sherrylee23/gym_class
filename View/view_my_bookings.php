@@ -1,35 +1,39 @@
 <?php
 session_start();
 
-// Ensure user is logged in
+// Secure Coding: Ensure user is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Member') {
     header("Location: ../user_management/login.php");
     exit();
 }
 
 $currentUserId = $_SESSION['user_id'];
+// REQUIREMENT: Secret Key matching your Service Provider
+$myBookingKey = "GYM_BOOKING_API_2026"; 
 
 /**
- * Consuming the Web Service via a direct URL as per teacher's example.
+ * Requirement 2.2.4: Consuming the Booking Module's Web Service via URL
+ * Demonstrates linking your module info via URL instead of local file includes.
  */
-function fetchMyBookingsViaService($userId) {
-    // Direct URL with only the user_id parameter 
-    $url = "http://localhost/gym_class/Services/Booking_info_service.php?user_id=" . $userId;
+function fetchMyBookingsViaService($userId, $key) {
+    // URL pointing to the Provider logic in your Services folder
+    // Attach the user_id to the URL!
+    $url = "http://localhost/gym_class/Services/booking_info_service.php?api_key=GYM_BOOKING_API_2026&user_id=" . $userId;
     
-    // Use file_get_contents to fetch data from the URL [cite: 227]
+    // Integrative Programming: Fetch JSON data from the service URL
     $response = @file_get_contents($url);
     
     if ($response === false) {
-        return ['error' => 'Integration Error: Could not connect to the Web Service.'];
+        return ['error' => 'Integration Error: Could not connect to the Booking Web Service.'];
     }
     
-    // JSON decode the response into an array [cite: 221]
     return json_decode($response, true);
 }
 
-// Call the simplified service
-$myBookings = fetchMyBookingsViaService($currentUserId);
+// Consume the web service logic
+$myBookings = fetchMyBookingsViaService($currentUserId, $myBookingKey);
 
+// Handle error messages from the service (e.g., unauthorized access)
 if (isset($myBookings['error'])) {
     $error_msg = $myBookings['error'];
     $myBookings = [];
@@ -108,10 +112,12 @@ if (isset($myBookings['error'])) {
                                             <span class="badge status-badge bg-secondary opacity-75">
                                                 <i class="bi bi-slash-circle me-1"></i>Cancelled
                                             </span>
+
                                         <?php elseif ($isStartedOrPast): ?>
                                             <span class="badge status-badge bg-success">
                                                 <i class="bi bi-check-circle me-1"></i>Class Started/Ended
                                             </span>
+
                                         <?php else: ?>
                                             <form action="../Services/Booking_service.php" method="POST" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
                                                 <input type="hidden" name="action" value="cancel">
@@ -128,7 +134,7 @@ if (isset($myBookings['error'])) {
                             <tr>
                                 <td colspan="4" class="text-center py-5">
                                     <i class="bi bi-calendar-x d-block fs-1 text-muted mb-3"></i>
-                                    <p class="text-muted">No reservations found for your account.</p>
+                                    <p class="text-muted">No reservations found in the web service.</p>
                                 </td>
                             </tr>
                         <?php endif; ?>

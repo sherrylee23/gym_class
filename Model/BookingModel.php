@@ -41,10 +41,10 @@ class BookingModel {
     public function getMemberBookings($userId) {
         $db = getDBConnection();
         // JOINs are used to pull details from schedules and trainers tables
-        $sql = "SELECT b.booking_id, b.status, s.class_name, s.class_date, s.start_time, s.end_time, t.full_name as trainer_name 
+        $sql = "SELECT DISTINCT b.booking_id, b.status, s.class_name, s.class_date, s.start_time, s.end_time, t.full_name as trainer_name 
                 FROM bookings b
                 JOIN schedules s ON b.schedule_id = s.id
-                JOIN trainers t ON s.trainer_id = t.id
+                LEFT JOIN trainers t ON s.trainer_id = t.id
                 WHERE b.user_id = ?
                 ORDER BY s.class_date DESC, s.start_time DESC";
                 
@@ -72,11 +72,11 @@ class BookingModel {
     public function getAllBookings() {
         $db = getDBConnection();
         // Logic: Pull member name from users table and class details from schedules
-        $sql = "SELECT b.booking_id, b.status, u.full_name as member_name, s.class_name, s.class_date, s.start_time, s.end_time, t.full_name as trainer_name 
+        $sql = "SELECT DISTINCT b.booking_id, b.status, u.full_name as member_name, s.class_name, s.class_date, s.start_time, s.end_time, t.full_name as trainer_name 
                 FROM bookings b
                 JOIN users u ON b.user_id = u.id
                 JOIN schedules s ON b.schedule_id = s.id
-                JOIN trainers t ON s.trainer_id = t.id
+                LEFT JOIN trainers t ON s.trainer_id = t.id
                 ORDER BY s.class_date DESC, s.start_time DESC";
                 
         $stmt = $db->query($sql);

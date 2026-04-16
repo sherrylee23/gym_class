@@ -56,6 +56,8 @@ if ($method === 'POST') {
         $newSched->start_time = $start;
         $newSched->end_time   = $end;
         $newSched->max_capacity = $max;
+        
+        $newSched->is_free = isset($_POST['is_free']) ? $_POST['is_free'] : 0;
 
         if ($newSched->save()) {
             echo json_encode(['status' => 'success', 'message' => 'Schedule added successfully!']);
