@@ -184,7 +184,7 @@ try {
                                         // NEW RULE: Is this class Yoga? (strtolower makes it safe so "Yoga" and "yoga" both work)
                                         $isYoga = (strtolower(trim($row['class_name'])) === 'yoga');
                                         ?>
-                                        
+
                                         <?php if ($row['trainer_id'] == $currentUserId): ?>
                                             <button class="btn btn-outline-purple w-100" disabled style="cursor: default;">
                                                 <i class="bi bi-person-badge-fill me-2"></i>YOU ARE THE TRAINER

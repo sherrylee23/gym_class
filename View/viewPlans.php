@@ -4,6 +4,7 @@ require_once('../Services/PaymentController.php');
 
 //2.4.1 View Membership Plans
 //2.4.2 Make Payment (frontend)
+// 1. If the session does not exist, immediately reject access
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../user_management/login.php");
     exit;
@@ -18,6 +19,7 @@ $currentExpiry = $_SESSION['membership_expiry_date'] ?? null; // Adjust if you s
 $today = new DateTime();
 
 // Handle Form Submission
+// 2. During POST requests, ignore form inputs and strictly use Server Session Data
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $member_id = $_SESSION['user_id'];
     

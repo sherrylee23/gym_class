@@ -8,8 +8,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $member_id = $_SESSION['user_id'];
+$request_id = uniqid("REQ_");
 
-$url = 'http://localhost/gym_class/Services/history_api.php?member_id=' . $member_id;
+$url = 'http://localhost/gym_class/Services/history_api.php?member_id=' . $member_id. '&requestID=' . $request_id;
 
 //  PHP will yell us if the link is broken!
 $response = file_get_contents($url);

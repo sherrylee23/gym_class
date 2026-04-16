@@ -37,7 +37,8 @@ class PaymentModel {
 
     // Save a new payment record
     public function savePayment($memberId, $planId, $paymentType, $amount, $method) {
-        $stmt = $this->db->prepare("INSERT INTO payments (member_id, plan_id, payment_type, amount, payment_method) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO payments (member_id, plan_id, payment_type, "
+                . "amount, payment_method) VALUES (?, ?, ?, ?, ?)");
         return $stmt->execute([$memberId, $planId, $paymentType, $amount, $method]);
     }
 
