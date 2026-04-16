@@ -17,7 +17,8 @@ $myBookingKey = "GYM_BOOKING_API_2026";
  */
 function fetchMyBookingsViaService($userId, $key) {
     // URL pointing to the Provider logic in your Services folder
-    $url = "http://localhost/gym_class/Services/booking_info_service.php?api_key=GYM_BOOKING_API_2026";
+    // Attach the user_id to the URL!
+    $url = "http://localhost/gym_class/Services/booking_info_service.php?api_key=GYM_BOOKING_API_2026&user_id=" . $userId;
     
     // Integrative Programming: Fetch JSON data from the service URL
     $response = @file_get_contents($url);

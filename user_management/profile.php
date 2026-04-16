@@ -1,5 +1,6 @@
 <?php
 require_once('UserController.php');
+require_once('Database.php');
 
 // Ensure user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -16,7 +17,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 $role = $_SESSION['role'];
+
+// ==========================================
+// NEW: MEMBERSHIP PROGRESS BAR LOGIC
+// ==========================================
+$isExpired = true;
+$statusText = "Inactive / Guest";
+$statusClass = "bg-secondary";
+$daysRemaining = 0;
+$progressPercent = 0;
+$barColor = "bg-success";
+$expiryDate = null;
+
+if ($role == 'Member') {
+    // 1. Fetch the expiry date from the database
+    $db = getDBConnection();
+    $stmt = $db->prepare("SELECT membership_expiry_date FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $expiryDate = $stmt->fetchColumn();
+
+    $today = new DateTime();
+
+    // 2. Calculate the days remaining
+    if (!empty($expiryDate)) {
+        $expiryObj = new DateTime($expiryDate);
+        
+        if ($expiryObj >= $today) {
+            $isExpired = false;
+            $statusText = "Active Member";
+            $statusClass = "bg-success";
+            
+            // Math: Difference in days
+            $interval = $today->diff($expiryObj);
+            $daysRemaining = $interval->days;
+            
+            // Math: Progress Bar Percentage (Assuming 30 days is "100%")
+            $progressPercent = ($daysRemaining / 30) * 100;
+            if ($progressPercent > 100) $progressPercent = 100; 
+            
+            // Color Logic: Turn Red if running out of time!
+            if ($daysRemaining <= 5) {
+                $barColor = "bg-danger";
+            } elseif ($daysRemaining <= 14) {
+                $barColor = "bg-warning";
+            }
+        } else {
+            $statusText = "Expired";
+            $statusClass = "bg-danger";
+        }
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -108,22 +160,71 @@ $role = $_SESSION['role'];
 
                             <div class="info-box">
                                 <?php if ($role == 'Member'): ?>
+                                    
+                                    <div class="card border mb-4 shadow-sm" style="border-radius: 15px;">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                                <div>
+                                                    <h6 class="text-muted mb-1 small fw-bold text-uppercase">Account Status</h6>
+                                                    <span class="badge <?php echo $statusClass; ?> fs-6 px-3 py-2">
+                                                        <i class="bi bi-patch-check-fill me-1"></i> 
+                                                        <?php echo $statusText; ?>
+                                                    </span>
+                                                </div>
+                                                
+                                                <?php if (!$isExpired): ?>
+                                                    <div class="text-end">
+                                                        <p class="mb-0 text-muted small fw-bold text-uppercase">Valid Until</p>
+                                                        <p class="fw-bold mb-0 text-dark"><?php echo date('d M Y', strtotime($expiryDate)); ?></p>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <a href="../View/viewPlans.php" class="btn btn-purple btn-sm px-4 fw-bold shadow-sm">Join Now</a>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <?php if (!$isExpired): ?>
+                                                <div class="mt-3">
+                                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                                        <span class="fw-bold">Time Remaining</span>
+                                                        <span class="fw-bold <?php echo str_replace('bg-', 'text-', $barColor); ?>">
+                                                            <?php echo $daysRemaining; ?> Days Left
+                                                        </span>
+                                                    </div>
+                                                    <div class="progress" style="height: 10px; border-radius: 10px; background-color: #e9ecef;">
+                                                        <div class="progress-bar progress-bar-striped progress-bar-animated <?php echo $barColor; ?>" 
+                                                             role="progressbar" 
+                                                             style="width: <?php echo $progressPercent; ?>%;" 
+                                                             aria-valuenow="<?php echo $progressPercent; ?>" 
+                                                             aria-valuemin="0" 
+                                                             aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
                                     <h5 class="fw-bold text-purple"><i class="bi bi-activity me-2"></i>Available Services</h5>
                                     <p class="text-muted small">Access your personalized gym member tools here.</p>
                                     <div class="d-flex gap-2 mt-3">
-                                        <a href="/gym_class/View/user_view_schedule.php" class="btn btn-purple mt-2">
+                                        <a href="http://localhost/gym_class/View/user_view_schedule.php" class="btn btn-purple mt-2">
                                             <i class="bi bi-calendar-plus me-2"></i>Book Class
-                                        </a>
-                                        <button class="btn btn-outline-dark"><i class="bi bi-wallet2 me-2"></i>Pay Fees</button>
+                                            </a>
+                                            <a href="http://localhost/gym_class/View/viewPlans.php" class="btn btn-outline-dark mt-2 fw-bold">
+                                                <i class="bi bi-wallet2 me-2"></i>Pay Memberships
+                                            </a>
+
+                                            <a href="http://localhost/gym_class/View/viewHistory.php" class="btn btn-outline-secondary mt-2">
+                                                <i class="bi bi-clock-history me-2"></i>Payment History
+                                            </a>
                                     </div>
 
-                                <?php elseif ($role == 'Admin'): ?>
-                                    <h5 class="fw-bold text-purple"><i class="bi bi-shield-check me-2"></i>System Administration</h5>
-                                    <p class="text-muted small">Manage users and oversee system reservations.</p>
-                                    <div class="d-flex gap-2 flex-wrap">
-                                        <a href="DisplayUsers.php" class="btn btn-purple mt-2">
-                                            <i class="bi bi-people-fill me-1"></i> Manage All Users
-                                        </a>
+                                    <?php elseif ($role == 'Admin'): ?>
+                                        <h5 class="fw-bold text-purple"><i class="bi bi-shield-check me-2"></i>System Administration</h5>
+                                        <p class="text-muted small">Manage users and oversee system reservations.</p>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <a href="DisplayUsers.php" class="btn btn-purple mt-2">
+                                                <i class="bi bi-people-fill me-1"></i> Manage All Users
+                                            </a>
                                         <a href="../View/admin_manage_bookings.php" class="btn btn-outline-dark mt-2">
                                             <i class="bi bi-journal-check me-1"></i> Manage All Bookings
                                         </a>
@@ -132,7 +233,7 @@ $role = $_SESSION['role'];
                                 <?php elseif ($role == 'Trainer'): ?>
                                     <h5 class="fw-bold text-purple"><i class="bi bi-calendar3 me-2"></i>Training Schedule</h5>
                                     <p class="text-muted small">Your upcoming sessions and assigned members are listed here.</p>
-                                    <a href="/gym_class/View/trainer_manage_schedule.php" class="btn btn-purple mt-2">
+                                    <a href="http://localhost/gym_class/View/trainer_manage_schedule.php" class="btn btn-purple mt-2">
                                         <i class="bi bi-list-check me-2"></i>View Schedule
                                     </a>
                                 <?php endif; ?>

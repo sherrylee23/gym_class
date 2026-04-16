@@ -1,4 +1,3 @@
-trainer_add_schedule
 <?php
 require_once('../Model/Trainer.php');
 
@@ -10,6 +9,13 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
     header("Location: ../user_management/login.php?error=unauthorized");
     exit();
 }
+
+// ==========================================
+// FIX: THE AUTO-CREATE TRAINER TRAPDOOR
+// ==========================================
+// This guarantees the logged-in user actually exists in the trainers table!
+Trainer::create($_SESSION['user_id'], $_SESSION['user_name']);
+// ==========================================
 
 // get trainer from web service
 $trainerApiUrl = "http://localhost/gym_class/Services/Schedule_service.php?fetch=trainers";
@@ -167,6 +173,18 @@ $trainers = json_decode($t_response, true) ?: [];
                                         <input type="number" name="max_capacity" class="form-control" value="20" min="1" required>
                                     </div>
                                 </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">Class Access (Freemium)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-tag-fill"></i></span>
+                                        <select name="is_free" class="form-select" required>
+                                            <option value="0" selected>Premium (Requires Membership)</option>
+                                            <option value="1">Free (Open to Everyone)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-text mt-1" style="font-size: 0.7rem;">Free classes bypass the payment gateway.</div>
+                                </div>
 
                                 <button type="submit" name="submit_schedule" class="btn btn-purple w-100">
                                     <i class="bi bi-check-circle me-2"></i>CONFIRM SCHEDULE
@@ -187,7 +205,9 @@ $trainers = json_decode($t_response, true) ?: [];
                                     } else {
                                         $result = json_decode($response);
                                         if (isset($result->status) && $result->status == "success") {
-                                            echo "<div class='alert alert-success small'><i class='bi bi-check-lg me-2'></i>" . $result->message . "</div>";
+                                            // Instead of just printing a message, teleport them back to the dashboard and trigger a refresh!
+                                            echo "<script>window.location.href = 'trainer_manage_schedule.php?msg=added';</script>";
+                                            exit();
                                         } else {
                                             $msg = $result->message ?? "An unexpected error occurred.";
                                             echo "<div class='alert alert-danger small'><i class='bi bi-exclamation-triangle me-2'></i>" . $msg . "</div>";

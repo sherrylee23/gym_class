@@ -9,6 +9,7 @@ class Schedule {
     public $start_time;
     public $end_time;
     public $max_capacity;
+    public $is_free;
 
     /**
      * Requirement: Fetch all available schedules.
@@ -40,7 +41,7 @@ class Schedule {
                 ) as time_conflict
 
                 FROM schedules s 
-                JOIN trainers t ON s.trainer_id = t.id 
+                LEFT JOIN trainers t ON s.trainer_id = t.id
                 
                 WHERE 
                     /* FILTER A: Capacity Check - Only show if slots are greater than 0 */
@@ -89,12 +90,18 @@ class Schedule {
      */
     public function save() {
         $db = getDBConnection();
-        $sql = "INSERT INTO schedules (trainer_id, class_name, class_date, start_time, end_time, max_capacity) 
-                VALUES (?, ?, ?, ?, ?, ?)";
+        // UPDATED: Added is_free to the INSERT statement
+        $sql = "INSERT INTO schedules (trainer_id, class_name, class_date, start_time, end_time, max_capacity, is_free) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt = $db->prepare($sql);
         return $stmt->execute([
-            $this->trainer_id, $this->class_name, $this->class_date, 
-            $this->start_time, $this->end_time, $this->max_capacity
+            $this->trainer_id, 
+            $this->class_name, 
+            $this->class_date, 
+            $this->start_time, 
+            $this->end_time, 
+            $this->max_capacity,
+            $this->is_free // <--- SEND THE DATA TO DATABASE
         ]);
     }
 

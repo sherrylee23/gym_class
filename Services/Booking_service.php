@@ -1,7 +1,8 @@
 <?php
 session_start();
 // Pointing to the Proxy located in the View folder
-require_once('../View/BookingProxy.php'); 
+require_once('../View/BookingProxy.php');
+require_once('../user_management/Database.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $proxy = new BookingProxy();
@@ -36,7 +37,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $scheduleId = filter_input(INPUT_POST, 'schedule_id', FILTER_SANITIZE_NUMBER_INT);
 
     if ($scheduleId) {
-        // Proxy enforces capacity (Max 2 for testing) and duplicate checks
+        
+        // ==========================================
+        // INTEGRATION: SMART PAYMENT GATEKEEPER 
+        // ==========================================
+        $db = getDBConnection(); 
+
+        // 1. First, check if the specific class they clicked is a "Free" class
+        $classStmt = $db->prepare("SELECT is_free FROM schedules WHERE id = ?");
+        $classStmt->execute([$scheduleId]);
+        $isFreeClass = $classStmt->fetchColumn();
+
+        // 2. Second, fetch the user's expiry date
+        $stmt = $db->prepare("SELECT membership_expiry_date FROM users WHERE id = ?");
+        $stmt->execute([$userIdFromSession]);
+        $expiryDate = $stmt->fetchColumn();
+
+        $today = new DateTime();
+
+        // 3. The Logic Check: 
+        // IF the class is NOT free (0) AND the user's membership is expired/empty... THEN block them!
+        if ($isFreeClass == 0 && (empty($expiryDate) || new DateTime($expiryDate) < $today)) {
+            
+            // BLOCKED! This is a premium class. Kick them to the payment page.
+            header("Location: ../View/viewPlans.php?error=must_pay_first");
+            exit(); 
+        }
+
+        if ($isFreeClass == 0 && (empty($expiryDate) || new DateTime($expiryDate) < $today)) {
+            // BLOCKED! This is a premium class. Kick them to the payment page.
+            header("Location: ../View/viewPlans.php?error=must_pay_first");
+            exit(); 
+        }
+        
+        $checkStmt = $db->prepare("SELECT COUNT(*) FROM bookings WHERE user_id = ? AND schedule_id = ? AND status = 'Confirmed'");
+        $checkStmt->execute([$userIdFromSession, $scheduleId]);
+        $alreadyBooked = $checkStmt->fetchColumn();
+
+        if ($alreadyBooked > 0) {
+            // Kick them back to the schedule page immediately!
+            header("Location: ../View/user_view_schedule.php?status=error&message=You+have+already+booked+this+class!");
+            exit();
+        }
+
+        // If they passed the Gatekeeper AND the Duplicate Shield...
+        // Proxy enforces capacity (Max 2 for testing)
         $result = $proxy->attemptBooking($userIdFromSession, $scheduleId);
         
         // Redirect back to the booking confirmation page with status
@@ -45,4 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: ../View/user_view_schedule.php?status=error&message=Invalid+Request");
     }
     exit();
+}
+?>
 }
