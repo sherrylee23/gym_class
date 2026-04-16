@@ -1,4 +1,3 @@
-trainer_manage_schedule
 <?php
 require_once('../Model/Schedule.php');
 

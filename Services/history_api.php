@@ -1,16 +1,32 @@
 <?php
-require_once('PaymentController.php');
+// File: Services/history_api.php
+// This file acts as the API Provider
+
+// Hide PHP warnings so they don't break the JSON output
+error_reporting(0);
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    if (!isset($_GET['member_id'])) {
-        echo json_encode(['status' => 'E', 'message' => 'Member ID required', 'timeStamp' => date('Y-m-d H:i:s')]);
-        exit;
-    }
+require_once('../Model/PaymentModel.php');
 
-    $controller = new PaymentController();
-    $response = $controller->generateHistoryAPI($_GET['member_id']);
+// Check if member_id was passed in the URL
+if (isset($_GET['member_id'])) {
+    $member_id = intval($_GET['member_id']);
     
-    echo json_encode($response);
+    $model = new PaymentModel();
+    $transactions = $model->getPaymentHistory($member_id);
+    
+    // Return the data as a clean JSON object
+    echo json_encode([
+        'status' => 'success',
+        'member_id' => $member_id,
+        'transactions' => $transactions
+    ]);
+
+} else {
+    // Return an error if no ID was provided
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'No member_id provided in the request.'
+    ]);
 }
 ?>
