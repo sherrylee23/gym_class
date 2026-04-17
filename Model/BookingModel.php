@@ -1,6 +1,9 @@
 <?php
 require_once('../user_management/Database.php');
-
+/**
+     * Requirement 2.2.2: Storing the record in the database
+     * Creates a confirmed booking for a user.
+     */
 class BookingModel {
     /**
      * Requirement 2.2.2: Storing the record in the database
