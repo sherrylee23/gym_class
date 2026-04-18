@@ -6,13 +6,19 @@ function getBookingHistory($userId) {
     $response = @file_get_contents($url);
 
     if ($response === false) {
-        return null;
+        return [
+            'status' => 'error',
+            'message' => 'Unable to connect to booking_info_service.php'
+        ];
     }
 
     $decoded = json_decode($response, true);
 
     if ($decoded === null) {
-        return null;
+        return [
+            'status' => 'error',
+            'message' => 'Invalid JSON response from booking_info_service.php'
+        ];
     }
 
     return $decoded;

@@ -189,7 +189,7 @@ if ($role === 'Member') {
                                                 <p class="fw-bold mb-0 text-dark"><?php echo date('d M Y', strtotime($expiryDate)); ?></p>
                                             </div>
                                         <?php else: ?>
-                                            <a href="../View/viewPlans.php" class="btn btn-purple btn-sm px-4 fw-bold shadow-sm">Join Now</a>
+                                            <a href="viewPlans.php" class="btn btn-purple btn-sm px-4 fw-bold shadow-sm">Join Now</a>
                                         <?php endif; ?>
                                     </div>
 
@@ -218,13 +218,13 @@ if ($role === 'Member') {
                             <h5 class="fw-bold text-purple"><i class="bi bi-activity me-2"></i>Available Services</h5>
                             <p class="text-muted small">Access your personalized gym member tools here.</p>
                             <div class="d-flex gap-2 mt-3 flex-wrap">
-                                <a href="http://localhost/gym_class/View/user_view_schedule.php" class="btn btn-purple mt-2">
+                                <a href="user_view_schedule.php" class="btn btn-purple mt-2">
                                     <i class="bi bi-calendar-plus me-2"></i>Book Class
                                 </a>
-                                <a href="http://localhost/gym_class/View/viewPlans.php" class="btn btn-outline-dark mt-2 fw-bold">
+                                <a href="viewPlans.php" class="btn btn-outline-dark mt-2 fw-bold">
                                     <i class="bi bi-wallet2 me-2"></i>Pay Memberships
                                 </a>
-                                <a href="http://localhost/gym_class/View/viewHistory.php" class="btn btn-outline-secondary mt-2">
+                                <a href="viewHistory.php" class="btn btn-outline-secondary mt-2">
                                     <i class="bi bi-clock-history me-2"></i>Payment History
                                 </a>
                             </div>
@@ -284,7 +284,7 @@ if ($role === 'Member') {
                         <?php elseif ($role == 'Trainer'): ?>
                             <h5 class="fw-bold text-purple"><i class="bi bi-calendar3 me-2"></i>Training Schedule</h5>
                             <p class="text-muted small">Your upcoming sessions and assigned members are listed here.</p>
-                            <a href="http://localhost/gym_class/View/trainer_manage_schedule.php" class="btn btn-purple mt-2">
+                            <a href="trainer_manage_schedule.php" class="btn btn-purple mt-2">
                                 <i class="bi bi-list-check me-2"></i>View Schedule
                             </a>
                         <?php endif; ?>

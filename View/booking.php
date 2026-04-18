@@ -3,9 +3,12 @@ session_start();
 require_once('../Model/Schedule.php');
 require_once('../Model/Database.php');
 
+$userId = $_SESSION['user_id'] ?? $_SESSION['id'] ?? $_SESSION['member_id'] ?? null;
+
+
 // 1. Verify user is logged in
-if (!isset($_SESSION['role'])) {
-    header("Location: ../Model/login.php?error=unauthorized");
+if (!$userId) {
+    header("Location: ../View/login.php?error=unauthorized");
     exit();
 }
 

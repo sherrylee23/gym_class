@@ -1,5 +1,6 @@
 <?php
 require_once('../Services/UserController.php');
+require_once('../Model/Database.php');
 
 // Security Check: Only Admins should see this page
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
@@ -11,7 +12,23 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
 function fetchUsersFromService() {
     $url = 'http://localhost/gym_class/Model/user_service.php';
     $response = @file_get_contents($url);
-    return ($response) ? json_decode($response, true) : [];
+
+    // Use API response if available
+    if ($response) {
+        $data = json_decode($response, true);
+        if (is_array($data) && !isset($data['error'])) {
+            return $data;
+        }
+    }
+
+    // Fallback to direct database query if API fails
+    try {
+        $conn = getDBConnection();
+        $stmt = $conn->query("SELECT id, full_name, email, role FROM users");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Exception $e) {
+        return [];
+    }
 }
 
 $users = fetchUsersFromService();

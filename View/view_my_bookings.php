@@ -16,18 +16,23 @@ $myBookingKey = "GYM_BOOKING_API_2026";
  * Demonstrates linking your module info via URL instead of local file includes.
  */
 function fetchMyBookingsViaService($userId, $key) {
-    // URL pointing to the Provider logic in your Services folder
-    // Attach the user_id to the URL!
     $url = "http://localhost/gym_class/Services/booking_info_service.php?api_key=GYM_BOOKING_API_2026&user_id=" . $userId;
-    
-    // Integrative Programming: Fetch JSON data from the service URL
+
     $response = @file_get_contents($url);
-    
-    if ($response === false) {
-        return ['error' => 'Integration Error: Could not connect to the Booking Web Service.'];
+
+    // API success
+    if ($response !== false) {
+        $data = json_decode($response, true);
+        if (is_array($data) && !isset($data['error'])) {
+            return $data;
+        }
     }
-    
-    return json_decode($response, true);
+
+    // direct DB
+    require_once('../Model/BookingModel.php');
+    $bookingModel = new BookingModel();
+
+    return $bookingModel->getMemberBookings($userId);
 }
 
 // Consume the web service logic

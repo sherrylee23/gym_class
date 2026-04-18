@@ -1,13 +1,20 @@
 <?php
 require_once('../Model/Database.php');
-header('Content-Type: application/json'); // [cite: 73]
+
+header('Content-Type: application/json');
 
 function getMembers() {
-    $conn = getDBConnection();
-    $stmt = $conn->query("SELECT id, full_name, email, role FROM users"); // [cite: 72]
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $conn = getDBConnection();
+        $stmt = $conn->query("SELECT id, full_name, email, role FROM users");
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $users ?: [];
+    } catch (PDOException $e) {
+        return ['error' => 'Database error'];
+    }
 }
 
 $data = getMembers();
-echo json_encode($data ?: ['error' => 'No users found']); // [cite: 74, 75]
+echo json_encode($data);
 ?>

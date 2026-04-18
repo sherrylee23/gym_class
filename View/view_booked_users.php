@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once('../Model/Database.php');
+require_once('../Model/UserModel.php');
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
     header("Location: login.php?error=unauthorized");
@@ -34,10 +35,6 @@ if ((int)$class['trainer_id'] !== (int)$_SESSION['user_id']) {
 
 /*
   2. Get all booked user IDs for this class
-
-  Assumption:
-  - bookings table has: booking_id, user_id, schedule_id, status
-  If your teammate table uses another column name, just adjust this query.
 */
 $stmt2 = $db->prepare("
     SELECT user_id, status
@@ -49,6 +46,7 @@ $stmt2->execute([$scheduleId]);
 $bookingRows = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
 $bookedUsers = [];
+$userModel = new UserModel();
 
 foreach ($bookingRows as $row) {
     $userId = $row['user_id'];
@@ -62,17 +60,31 @@ foreach ($bookingRows as $row) {
         . "&timeStamp=" . urlencode($timeStamp);
 
     $response = @file_get_contents($url);
+    $userData = null;
 
     if ($response !== false) {
         $userData = json_decode($response, true);
+    }
 
-        if (isset($userData['status']) && $userData['status'] === 'S') {
+    if ($userData && isset($userData['status']) && $userData['status'] === 'S') {
+        $bookedUsers[] = [
+            'userId' => $userData['userId'],
+            'fullName' => $userData['fullName'],
+            'email' => $userData['email'],
+            'phoneNumber' => $userData['phoneNumber'] ?? '',
+            'role' => $userData['role'],
+            'bookingStatus' => $row['status'] ?? ''
+        ];
+    } else {
+        $user = $userModel->findUserById($userId);
+
+        if ($user) {
             $bookedUsers[] = [
-                'userId' => $userData['userId'],
-                'fullName' => $userData['fullName'],
-                'email' => $userData['email'],
-                'phoneNumber' => $userData['phoneNumber'] ?? '',
-                'role' => $userData['role'],
+                'userId' => $user['id'],
+                'fullName' => $user['full_name'],
+                'email' => $user['email'],
+                'phoneNumber' => $user['phone_number'] ?? '',
+                'role' => $user['role'],
                 'bookingStatus' => $row['status'] ?? ''
             ];
         }
