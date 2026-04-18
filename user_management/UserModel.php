@@ -7,15 +7,18 @@ class UserModel {
     private $db;
 
     public function __construct() {
-        $this->db = getDBConnection(); // Uses Singleton [cite: 47, 85]
+        $this->db = getDBConnection();
     }
 
     // 2.1.1 User Registration
     public function register($name, $email, $phone, $password) {
         try {
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-            $query = "INSERT INTO users (full_name, email, phone_number, password) VALUES (:name, :email, :phone, :password)";
+
+            $query = "INSERT INTO users (full_name, email, phone_number, password, failed_attempts, lock_until) 
+                      VALUES (:name, :email, :phone, :password, 0, NULL)";
             $stmt = $this->db->prepare($query);
+
             return $stmt->execute([
                         ':name' => $name,
                         ':email' => $email,
@@ -23,26 +26,23 @@ class UserModel {
                         ':password' => $hashedPassword
             ]);
         } catch (PDOException $e) {
-            // Check if the error is a "Duplicate Entry" (SQLSTATE 23000)
             if ($e->getCode() == 23000) {
                 return false;
             }
-            throw $e; // Rethrow other unexpected errors
+            throw $e;
         }
     }
 
     // 2.1.2 & 2.1.4 Login and Role Fetching
     public function findUserByEmail($email) {
         $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email");
-        $stmt->execute([':email' => $email]); // [cite: 51, 89]
+        $stmt->execute([':email' => $email]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // find by id
     public function findUserById($id) {
-        $db = getDBConnection();
-        $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = :id");
+        $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -58,7 +58,6 @@ class UserModel {
         }
     }
 
-    // Inside class UserModel
     public function updateRole($userId, $newRole) {
         try {
             $stmt = $this->db->prepare("UPDATE users SET role = ? WHERE id = ?");
@@ -66,6 +65,31 @@ class UserModel {
         } catch (PDOException $e) {
             return false;
         }
+    }
+
+    // Brute force protection
+    public function increaseAttempts($id) {
+        $user = $this->findUserById($id);
+        if (!$user) {
+            return false;
+        }
+
+        $currentAttempts = (int) ($user['failed_attempts'] ?? 0);
+        $newAttempts = $currentAttempts + 1;
+
+        if ($newAttempts >= 5) {
+            $lockUntil = date('Y-m-d H:i:s', strtotime('+1 minutes'));
+            $stmt = $this->db->prepare("UPDATE users SET failed_attempts = ?, lock_until = ? WHERE id = ?");
+            return $stmt->execute([$newAttempts, $lockUntil, $id]);
+        } else {
+            $stmt = $this->db->prepare("UPDATE users SET failed_attempts = ? WHERE id = ?");
+            return $stmt->execute([$newAttempts, $id]);
+        }
+    }
+
+    public function resetAttempts($id) {
+        $stmt = $this->db->prepare("UPDATE users SET failed_attempts = 0, lock_until = NULL WHERE id = ?");
+        return $stmt->execute([$id]);
     }
 }
 

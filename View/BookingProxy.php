@@ -1,9 +1,11 @@
 <?php
+
 // Fix: Point to the correct folder location
 require_once('../Model/BookingModel.php');
 require_once('../Model/Schedule.php');
 
 class BookingProxy {
+
     private $realModel;
 
     public function __construct() {
@@ -47,9 +49,9 @@ class BookingProxy {
 
         $stmtConflict = $db->prepare($sqlConflict);
         $stmtConflict->execute([
-            $userId, 
-            $requestedClass['class_date'], 
-            $requestedClass['start_time'], 
+            $userId,
+            $requestedClass['class_date'],
+            $requestedClass['start_time'],
             $requestedClass['end_time']
         ]);
 
@@ -57,15 +59,19 @@ class BookingProxy {
             return ["status" => "error", "message" => "Time Conflict! You already have a class booked during this time slot."];
         }
         // --- END OF TIME CONFLICT CHECK ---
-
         // 2. Requirement 2.2.2: Determine if class reached maximum capacity
         $currentOccupancy = $this->realModel->getCurrentOccupancy($scheduleId);
-        
-        // Testing limit as requested (Max 2 for testing)
-        $maxTestingLimit = 2; 
 
-        if ($currentOccupancy >= $maxTestingLimit) {
-            return ["status" => "error", "message" => "This class has reached its capacity (Max: 2)."];
+        // Get actual max capacity from database
+        $stmt = $db->prepare("SELECT max_capacity FROM schedules WHERE id = ?");
+        $stmt->execute([$scheduleId]);
+        $maxCapacity = $stmt->fetchColumn();
+
+        if ($currentOccupancy >= $maxCapacity) {
+            return [
+                "status" => "error",
+                "message" => "This class has reached its capacity (Max: $maxCapacity)."
+            ];
         }
 
         // 3. Persistence: Save to SQL if all validations pass
@@ -84,7 +90,7 @@ class BookingProxy {
      */
     public function attemptCancellation($bookingId, $userId, $role = 'Member') {
         $db = getDBConnection();
-        
+
         // FETCH: Get the actual owner of the record and class timing from the database
         $sql = "SELECT b.user_id as owner_id, s.class_date, s.start_time 
                 FROM bookings b 

@@ -1,36 +1,50 @@
 <?php
 
-require_once('UserModel.php');
-if (session_status() === PHP_SESSION_NONE)
+require_once('UserFacade.php');
+
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
+}
 
 class UserController {
 
-    private $model;
+    private $facade;
 
     public function __construct() {
-        $this->model = new UserModel();
+        $this->facade = new UserFacade();
     }
 
-    // 2.1.1 User Registration Logic (The missing method)
-    public function registerUser($data) {
-        // Check if the form used 'phone' or 'phone_number'
-        $phone = isset($data['phone_number']) ? $data['phone_number'] : ($data['phone'] ?? null);
-
-        if (!preg_match('/^[0-9]{11}$/', $data['phone_number'])) {
-            return "Invalid Phone Format! Please enter exactly 11 numbers (e.g., 01234567890).";
+    private function validateCsrfToken($data) {
+        if (!isset($_SESSION['csrf_token']) || !isset($data['csrf_token'])) {
+            return false;
         }
 
-        if (empty($data['full_name']) || empty($data['email']) || empty($phone) || empty($data['password'])) {
+        return hash_equals($_SESSION['csrf_token'], $data['csrf_token']);
+    }
+
+    public function registerUser($data) {
+        if (!$this->validateCsrfToken($data)) {
+            return "Invalid request token.";
+        }
+
+        $phone = isset($data['phone_number']) ? trim($data['phone_number']) : ($data['phone'] ?? null);
+        $fullName = trim($data['full_name'] ?? '');
+        $email = trim($data['email'] ?? '');
+        $password = $data['password'] ?? '';
+
+        if (empty($fullName) || empty($email) || empty($phone) || empty($password)) {
             return "Please fill in all required fields, including your phone number.";
         }
 
-        $result = $this->model->register(
-                $data['full_name'],
-                $data['email'],
-                $phone,
-                $data['password']
-        );
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return "Invalid email format.";
+        }
+
+        if (!preg_match('/^[0-9]{11}$/', $phone)) {
+            return "Invalid Phone Format! Please enter exactly 11 numbers (e.g., 01234567890).";
+        }
+
+        $result = $this->facade->registerUser($fullName, $email, $phone, $password);
 
         if ($result) {
             header("Location: login.php?registration=success");
@@ -40,38 +54,61 @@ class UserController {
         }
     }
 
-    // Rename or add this to match your login.php call
-    public function loginUser($email, $password) {
-        $user = $this->model->findUserByEmail($email);
-        if ($user && password_verify($password, $user['password'])) {
+    public function loginUser($email, $password, $csrfToken = null) {
+        if (!isset($_SESSION['csrf_token']) || !$csrfToken || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
+            return "Invalid request token.";
+        }
+
+        $email = trim($email);
+        $user = $this->facade->getUserByEmail($email);
+
+        if (!$user) {
+            return "Invalid email or password.";
+        }
+
+        if (!empty($user['lock_until']) && strtotime($user['lock_until']) > time()) {
+            return "Account temporarily locked. Please try again later.";
+        }
+
+        if (password_verify($password, $user['password'])) {
+            $this->facade->resetFailedAttempts($user['id']);
+
+            session_regenerate_id(true);
+
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['full_name'];
-            $_SESSION['role'] = $user['role']; // 2.1.4 RBAC logic 
+            $_SESSION['role'] = $user['role'];
+
             header("Location: profile.php");
             exit;
         } else {
+            $this->facade->increaseFailedAttempts($user['id']);
             return "Invalid email or password.";
         }
     }
 
-    // Add this inside your UserController class
     public function updateProfile($data) {
-        if (!isset($_SESSION['user_id']))
+        if (!isset($_SESSION['user_id'])) {
             return "Session expired. Please login.";
+        }
 
-        // 1. Get the data and remove any accidental spaces
-        $name = trim($data['full_name']);
-        $phone = trim($data['phone_number']);
+        if (!$this->validateCsrfToken($data)) {
+            return "Invalid request token.";
+        }
+
+        $name = trim($data['full_name'] ?? '');
+        $phone = trim($data['phone_number'] ?? '');
         $password = !empty($data['password']) ? $data['password'] : null;
 
-        // 2. Validation: Check if it is EXACTLY 11 digits
-        // ^[0-9]{11}$ means: Start, exactly 11 numbers, End.
+        if (empty($name) || empty($phone)) {
+            return "Please fill in all required fields.";
+        }
+
         if (!preg_match('/^[0-9]{11}$/', $phone)) {
             return "Error: Phone number must be exactly 11 digits (e.g., 01234567890).";
         }
 
-        // 3. If validation passes, proceed to Model
-        $result = $this->model->updateProfile($_SESSION['user_id'], $name, $phone, $password);
+        $result = $this->facade->updateUserProfile($_SESSION['user_id'], $name, $phone, $password);
 
         if ($result) {
             $_SESSION['user_name'] = $name;
@@ -83,34 +120,37 @@ class UserController {
     }
 
     public function changeUserRole($data) {
-        // 1. Security Check: Only Admins allowed
         if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
             return "Unauthorized: Only Admins can change roles.";
         }
 
-        $userId = $data['user_id'];
-        $newRole = $data['role'];
+        if (!$this->validateCsrfToken($data)) {
+            return "Invalid request token.";
+        }
 
-        // 2. Data Validation
-        $allowedRoles = ['Member', 'Trainer', 'Admin'];
+        $userId = $data['user_id'] ?? null;
+        $newRole = $data['role'] ?? '';
+
+        $allowedRoles = ['User', 'Member', 'Trainer', 'Admin'];
         if (!in_array($newRole, $allowedRoles)) {
             return "Invalid role selected.";
         }
 
-        // 3. Call the Model to perform the update
-        $result = $this->model->updateRole($userId, $newRole);
+        $result = $this->facade->updateUserRole($userId, $newRole);
 
         if ($result) {
-            // check is change to trainer
             if ($newRole === 'Trainer') {
-                require_once('../Model/Trainer.php');
+                $trainerPath = dirname(__DIR__) . '/Model/Trainer.php';
+                if (file_exists($trainerPath)) {
+                    require_once($trainerPath);
 
-                $user = $this->model->findUserById($userId);
-                if ($user) {
-                    Trainer::create($userId, $user['full_name']);
+                    $user = $this->facade->getUserById($userId);
+                    if ($user && class_exists('Trainer')) {
+                        Trainer::create($userId, $user['full_name']);
+                    }
                 }
             }
-            // Redirect back to the user list with a success message
+
             header("Location: DisplayUsers.php?status=updated");
             exit;
         } else {
