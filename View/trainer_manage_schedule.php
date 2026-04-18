@@ -6,14 +6,14 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
-    header("Location: ../user_management/login.php?error=unauthorized");
+    header("Location: ../Model/login.php?error=unauthorized");
     exit();
 }
 
 // delete
 $error_msg = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
-    $url = "http://localhost/gym_class/Services/schedule_service.php";
+    $url = "http://localhost/gym_class/Services/Schedule_service.php";
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -97,7 +97,7 @@ $schedules = json_decode($response, true) ?: [];
 <body>
 
 <div class="container">
-    <a href="../user_management/profile.php" class="back-link">
+    <a href="../View/profile.php" class="back-link">
         <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
     </a>
 

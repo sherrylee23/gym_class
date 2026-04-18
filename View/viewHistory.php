@@ -3,7 +3,7 @@
 //2.4.4 View Management History
 session_start();
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../user_management/login.php");
+    header("Location: login.php");
     exit;
 }
 
@@ -36,7 +36,7 @@ $transactions = isset($historyData['transactions']) ? $historyData['transactions
 <div class="hero-header text-center">
     <h2>Payment History</h2>
     <div>
-        <a href="../user_management/profile.php" class="btn btn-outline-light mt-2 me-2">
+        <a href="../View/profile.php" class="btn btn-outline-light mt-2 me-2">
             <i class="bi bi-arrow-left"></i> Back to Dashboard
         </a>
         

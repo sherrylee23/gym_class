@@ -6,7 +6,7 @@ require_once('../Services/PaymentController.php');
 //2.4.2 Make Payment (frontend)
 // 1. If the session does not exist, immediately reject access
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../user_management/login.php");
+    header("Location: login.php");
     exit;
 }
 
@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // INTEGRATION: ACTING AS A CONSUMER
     // ==========================================
     // 1. Reach out to User's Web Service
-    $userServiceUrl = 'http://localhost/gym_class/user_management/user_service.php';
+    $userServiceUrl = 'http://localhost/gym_class/Model/user_service.php';
     $userResponse = @file_get_contents($userServiceUrl); //acting like an external client asking for data.
     $usersList = json_decode($userResponse, true);
 
@@ -79,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <div class="hero-header text-center">
     <h2>Membership Plans</h2>
     <div>
-        <a href="../user_management/profile.php" class="btn btn-outline-light mt-2 me-2">
+        <a href="../View/profile.php" class="btn btn-outline-light mt-2 me-2">
             <i class="bi bi-arrow-left"></i> Back to Dashboard
         </a>
         

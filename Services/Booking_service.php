@@ -2,7 +2,7 @@
 session_start();
 // Pointing to the Proxy located in the View folder
 require_once('../View/BookingProxy.php');
-require_once('../user_management/Database.php');
+require_once('../Model/Database.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $proxy = new BookingProxy();
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Secure Coding: Ensure user is logged in
     if (!$userIdFromSession) {
-        header("Location: ../user_management/login.php?error=unauthorized");
+        header("Location: ../Model/login.php?error=unauthorized");
         exit();
     }
 

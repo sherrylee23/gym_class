@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
-    header("Location: ../user_management/login.php?error=unauthorized");
+    header("Location: ../Model/login.php?error=unauthorized");
     exit();
 }
 

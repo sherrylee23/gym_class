@@ -1,5 +1,5 @@
 <?php
-require_once('Database.php');
+require_once('../Model/Database.php');
 header('Content-Type: application/json'); // [cite: 73]
 
 function getMembers() {

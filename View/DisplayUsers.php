@@ -1,5 +1,5 @@
 <?php
-require_once('UserController.php');
+require_once('../Services/UserController.php');
 
 // Security Check: Only Admins should see this page
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
 
 // Fetching data from the service
 function fetchUsersFromService() {
-    $url = 'http://localhost/gym_class/user_management/user_service.php';
+    $url = 'http://localhost/gym_class/Model/user_service.php';
     $response = @file_get_contents($url);
     return ($response) ? json_decode($response, true) : [];
 }

@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once('../user_management/Database.php');
+require_once('../Model/Database.php');
 require_once('../Model/Schedule.php');
 
 // Get current user ID for personal booking status (Requirement 2.2.2)
@@ -109,7 +109,7 @@ try {
                 <h1 class="display-5 fw-bold mt-2">Pick Your Perfect Class</h1>
                 <p class="lead opacity-75">Your fitness journey starts with one click.</p>
                 <div class="d-flex justify-content-center gap-2 mt-3">
-                    <a href="../user_management/profile.php" class="btn btn-outline-light btn-sm">
+                    <a href="../View/profile.php" class="btn btn-outline-light btn-sm">
                         <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
                     </a>
                     <a href="view_my_bookings.php" class="btn btn-light text-purple btn-sm fw-bold shadow-sm">

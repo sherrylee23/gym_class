@@ -1,5 +1,5 @@
 <?php
-require_once('../user_management/Database.php');
+require_once('Database.php');
 
 class Schedule {
     public $id;

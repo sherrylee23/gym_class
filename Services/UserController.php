@@ -1,6 +1,6 @@
 <?php
 
-require_once('UserFacade.php');
+require_once('../Model/UserFacade.php');
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

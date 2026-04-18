@@ -1,5 +1,5 @@
 <?php
-require_once('../user_management/Database.php');
+require_once('../Model/Database.php');
 require_once('../Model/BookingModel.php');
 
 // Set header to JSON so it displays correctly in the browser 

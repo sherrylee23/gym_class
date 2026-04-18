@@ -1,6 +1,6 @@
 <?php
 
-require_once('../user_management/Database.php');
+require_once('Database.php');
 
 class Trainer {
     public $trainer_id;

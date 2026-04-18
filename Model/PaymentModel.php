@@ -1,5 +1,5 @@
 <?php
-require_once('../user_management/Database.php');
+require_once('Database.php');
 
 //2.4.1 View Membership Plans
 class PaymentModel {

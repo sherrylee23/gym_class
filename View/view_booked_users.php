@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once('../user_management/Database.php');
+require_once('../Model/Database.php');
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
-    header("Location: ../user_management/login.php?error=unauthorized");
+    header("Location: login.php?error=unauthorized");
     exit();
 }
 
@@ -56,7 +56,7 @@ foreach ($bookingRows as $row) {
     $requestID = 'TRAINER' . $scheduleId . '_' . $userId;
     $timeStamp = date('Y-m-d H:i:s');
 
-    $url = "http://localhost/gym_class/user_management/getUserProfileapi.php"
+    $url = "http://localhost/gym_class/Model/getUserProfileapi.php"
         . "?requestID=" . urlencode($requestID)
         . "&userId=" . urlencode($userId)
         . "&timeStamp=" . urlencode($timeStamp);

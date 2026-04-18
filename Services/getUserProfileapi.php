@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require_once('UserFacade.php');
+require_once('../Model/UserFacade.php');
 
 // Only allow GET request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {

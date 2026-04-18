@@ -1,5 +1,5 @@
 <?php
-require_once('../user_management/Database.php');
+require_once('Database.php');
 /**
      * Requirement 2.2.2: Storing the record in the database
      * Creates a confirmed booking for a user.

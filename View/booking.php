@@ -1,11 +1,11 @@
 <?php
 session_start();
 require_once('../Model/Schedule.php');
-require_once('../user_management/Database.php');
+require_once('../Model/Database.php');
 
 // 1. Verify user is logged in
 if (!isset($_SESSION['role'])) {
-    header("Location: ../user_management/login.php?error=unauthorized");
+    header("Location: ../Model/login.php?error=unauthorized");
     exit();
 }
 

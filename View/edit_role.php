@@ -1,6 +1,6 @@
 <?php
-require_once('UserController.php');
-require_once('UserModel.php');
+require_once('../Services/UserController.php');
+require_once('../Model/UserModel.php');
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

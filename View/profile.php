@@ -1,7 +1,7 @@
 <?php
-require_once('UserController.php');
-require_once('Database.php');
-require_once('user_booking_api_client.php');
+require_once('../Services/UserController.php');
+require_once('../Model/Database.php');
+require_once('../Services/user_booking_api_client.php');
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

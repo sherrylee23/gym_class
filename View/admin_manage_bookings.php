@@ -4,7 +4,7 @@ require_once('../Model/BookingModel.php');
 
 // 1. Security Check: Only Admins can access this page
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
-    header("Location: ../user_management/login.php?error=unauthorized");
+    header("Location: ../Model/login.php?error=unauthorized");
     exit();
 }
 
@@ -14,7 +14,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
  * interacts with the data through a controlled interface.
  */
 function fetchAllBookingsForAdmin() {
-    $url = "http://localhost/gym_class/Services/Booking_info_service.php?user_id=admin_view_all";
+    $url = "http://localhost/gym_class/Services/booking_info_service.php?user_id=admin_view_all";
     
     // Fetch JSON data from the service URL [cite: 220]
     $response = @file_get_contents($url);
@@ -97,7 +97,7 @@ $allBookings = fetchAllBookingsForAdmin();
         <div class="col-lg-11">
 
             <div class="mb-3">
-                <a href="../user_management/profile.php" class="btn-back">
+                <a href="../View/profile.php" class="btn-back">
                     <i class="bi bi-arrow-left-circle me-1"></i> Back to Dashboard
                 </a>
             </div>

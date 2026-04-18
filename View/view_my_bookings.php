@@ -3,7 +3,7 @@ session_start();
 
 // Secure Coding: Ensure user is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Member') {
-    header("Location: ../user_management/login.php");
+    header("Location: login.php");
     exit();
 }
 
