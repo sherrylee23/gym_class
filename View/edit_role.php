@@ -1,22 +1,29 @@
 <?php
-require_once('UserController.php');
+require_once('../Services/UserController.php');
+require_once('../Model/UserModel.php');
 
-// Security Check: Only Admins allowed
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
     header("Location: profile.php");
     exit;
+}
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 $model = new UserModel();
 $userToEdit = null;
 $error_message = "";
 
-// 1. Fetch User Data
 if (isset($_GET['id'])) {
     $stmt = getDBConnection()->prepare("SELECT * FROM users WHERE id = ?");
     $stmt->execute([$_GET['id']]);
     $userToEdit = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if (!$userToEdit) {
         header("Location: DisplayUsers.php");
         exit;
@@ -26,10 +33,9 @@ if (isset($_GET['id'])) {
     exit;
 }
 
-// 2. Handle Form Submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $ctrl = new UserController();
-    $error_message = $ctrl->changeUserRole($_POST); 
+    $error_message = $ctrl->changeUserRole($_POST);
 }
 ?>
 
@@ -42,19 +48,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
+
     <style>
-        body { 
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); 
-            height: 100vh; 
-            display: flex; 
-            align-items: center; 
-            font-family: 'Poppins', sans-serif; 
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: 'Poppins', sans-serif;
         }
-        .card { 
-            border-radius: 20px; 
-            border: none; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
+        .card {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
             overflow: hidden;
         }
         .header-purple {
@@ -70,14 +76,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-bottom: 25px;
             border-left: 4px solid #6f42c1;
         }
-        .btn-purple { 
-            background: #6f42c1; 
-            color: white; 
+        .btn-purple {
+            background: #6f42c1;
+            color: white;
             padding: 12px;
             transition: 0.3s;
         }
-        .btn-purple:hover { 
-            background: #59359a; 
+        .btn-purple:hover {
+            background: #59359a;
             color: white;
             transform: translateY(-2px);
         }
@@ -92,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-5 col-lg-4">
-            
+
             <div class="card">
                 <div class="header-purple">
                     <i class="bi bi-shield-lock fs-1"></i>
@@ -108,13 +114,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <?php if (!empty($error_message)): ?>
                         <div class="alert alert-danger py-2 small mb-3">
-                            <i class="bi bi-exclamation-circle me-2"></i> <?php echo $error_message; ?>
+                            <i class="bi bi-exclamation-circle me-2"></i> <?php echo htmlspecialchars($error_message); ?>
                         </div>
                     <?php endif; ?>
 
                     <form method="POST">
-                        <input type="hidden" name="user_id" value="<?php echo $userToEdit['id']; ?>">
-                        
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                        <input type="hidden" name="user_id" value="<?php echo (int)$userToEdit['id']; ?>">
+
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-purple">ASSIGN NEW ROLE</label>
                             <div class="input-group">
@@ -133,7 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <button type="submit" class="btn btn-purple w-100 fw-bold shadow-sm">
                             <i class="bi bi-check2-circle me-2"></i>CONFIRM CHANGE
                         </button>
-                        
+
                         <div class="text-center mt-3">
                             <a href="DisplayUsers.php" class="text-decoration-none text-muted small fw-bold">
                                 <i class="bi bi-x-circle me-1"></i> CANCEL & GO BACK

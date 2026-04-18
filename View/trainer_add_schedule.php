@@ -1,4 +1,3 @@
-trainer_add_schedule
 <?php
 require_once('../Model/Trainer.php');
 
@@ -7,9 +6,12 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
-    header("Location: ../user_management/login.php?error=unauthorized");
+    header("Location: ../Model/login.php?error=unauthorized");
     exit();
 }
+
+// make sure the logged-in user actually exists in the trainers table
+Trainer::create($_SESSION['user_id'], $_SESSION['user_name']);
 
 // get trainer from web service
 $trainerApiUrl = "http://localhost/gym_class/Services/Schedule_service.php?fetch=trainers";
@@ -145,7 +147,7 @@ $trainers = json_decode($t_response, true) ?: [];
                                     <label class="form-label">Class Date</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                        <input type="date" name="class_date" class="form-control" required>
+                                        <input type="date" name="class_date" class="form-control" min="<?php echo date('Y-m-d'); ?>" required>
                                     </div>
                                 </div>
 
@@ -168,6 +170,41 @@ $trainers = json_decode($t_response, true) ?: [];
                                     </div>
                                 </div>
 
+                                <div class="mb-4">
+                                    <label class="form-label">Class Access (Freemium)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-tag-fill"></i></span>
+                                        <select name="is_free" id="accessSelect" class="form-select" required>
+                                            <option value="0" selected>Premium (Requires Membership)</option>
+                                            <option value="1">Free (Open to Everyone)</option>
+                                        </select>
+                                    </div>
+                                    <div id="accessNote" class="form-text mt-1" style="font-size: 0.7rem;">
+                                        Only Yoga classes can be set to Free.
+                                    </div>
+                                </div>
+
+                                <script>
+                                    // only yoga class can select freemium
+                                    const classSelect = document.querySelector('select[name="class_name"]');
+                                    const accessSelect = document.getElementById('accessSelect');
+
+                                    classSelect.addEventListener('change', function () {
+                                        if (this.value === 'Yoga') {
+                                            accessSelect.disabled = false;
+                                        } else {
+                                            accessSelect.value = "0";
+                                            accessSelect.disabled = true;
+
+                                           
+                                        }
+                                    });
+
+                                    document.querySelector('form').addEventListener('submit', function () {
+                                        accessSelect.disabled = false;
+                                    });
+                                </script>
+
                                 <button type="submit" name="submit_schedule" class="btn btn-purple w-100">
                                     <i class="bi bi-check-circle me-2"></i>CONFIRM SCHEDULE
                                 </button>
@@ -187,7 +224,9 @@ $trainers = json_decode($t_response, true) ?: [];
                                     } else {
                                         $result = json_decode($response);
                                         if (isset($result->status) && $result->status == "success") {
-                                            echo "<div class='alert alert-success small'><i class='bi bi-check-lg me-2'></i>" . $result->message . "</div>";
+                                            // Instead of just printing a message, teleport them back to the dashboard and trigger a refresh!
+                                            echo "<script>window.location.href = 'trainer_manage_schedule.php?msg=added';</script>";
+                                            exit();
                                         } else {
                                             $msg = $result->message ?? "An unexpected error occurred.";
                                             echo "<div class='alert alert-danger small'><i class='bi bi-exclamation-triangle me-2'></i>" . $msg . "</div>";

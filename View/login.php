@@ -1,14 +1,26 @@
 <?php
-require_once('UserController.php');
-$error = "";
+require_once('../Services/UserController.php');
 
-// Check if a registration success message exists in the URL
-$success_msg = isset($_GET['registration']) && $_GET['registration'] == 'success' ? "Registration successful! Please login." : "";
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+$error = "";
+$success_msg = isset($_GET['registration']) && $_GET['registration'] == 'success'
+    ? "Registration successful! Please login."
+    : "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $controller = new UserController();
-    // This calls the loginUser method in your UserController
-    $error = $controller->loginUser($_POST['email'], $_POST['password']);
+    $error = $controller->loginUser(
+        $_POST['email'],
+        $_POST['password'],
+        $_POST['csrf_token'] ?? null
+    );
 }
 ?>
 <!DOCTYPE html>
@@ -20,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -73,7 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="row justify-content-center">
         <div class="col-md-5">
             <div class="card login-card">
-                
+
                 <div class="logo-section">
                     <i class="bi bi-lightning-charge-fill fs-1"></i>
                     <h1 class="logo-text">Anytime Fitness</h1>
@@ -87,17 +99,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <?php if ($success_msg): ?>
                         <div class="alert alert-success small text-center" role="alert">
-                            <i class="bi bi-check-circle-fill me-2"></i><?php echo $success_msg; ?>
+                            <i class="bi bi-check-circle-fill me-2"></i><?php echo htmlspecialchars($success_msg); ?>
                         </div>
                     <?php endif; ?>
 
                     <?php if ($error): ?>
                         <div class="alert alert-danger small text-center" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i><?php echo $error; ?>
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i><?php echo htmlspecialchars($error); ?>
                         </div>
                     <?php endif; ?>
 
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+
                         <div class="mb-3">
                             <label class="form-label small fw-bold">EMAIL ADDRESS</label>
                             <div class="input-group">

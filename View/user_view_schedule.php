@@ -1,13 +1,28 @@
 <?php
 session_start();
-require_once('../user_management/Database.php');
+require_once('../Model/Database.php');
 require_once('../Model/Schedule.php');
 
-// Get current user ID for personal booking status (Requirement 2.2.2)
-$currentUserId = $_SESSION['user_id'] ?? 0;
+// Ensure user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php?error=unauthorized");
+    exit();
+}
+
+// Get current user ID for personal booking status
+$currentUserId = $_SESSION['user_id'];
+
+// Fetch Membership Status for UI Logic
+$db = getDBConnection();
+$stmt = $db->prepare("SELECT membership_expiry_date FROM users WHERE id = ?");
+$stmt->execute([$currentUserId]);
+$userExpiry = $stmt->fetchColumn();
+
+$today = new DateTime();
+$isUserExpired = (empty($userExpiry) || new DateTime($userExpiry) < $today);
 
 try {
-    // This calls the updated model logic that returns 'available_slots', 'user_booked', and 'time_conflict'
+    // Returns available slots, user booked status, and time conflict
     $schedules = Schedule::getAll($currentUserId);
 } catch (Exception $e) {
     $schedules = [];
@@ -99,7 +114,7 @@ try {
                 <h1 class="display-5 fw-bold mt-2">Pick Your Perfect Class</h1>
                 <p class="lead opacity-75">Your fitness journey starts with one click.</p>
                 <div class="d-flex justify-content-center gap-2 mt-3">
-                    <a href="../user_management/profile.php" class="btn btn-outline-light btn-sm">
+                    <a href="../View/profile.php" class="btn btn-outline-light btn-sm">
                         <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
                     </a>
                     <a href="view_my_bookings.php" class="btn btn-light text-purple btn-sm fw-bold shadow-sm">
@@ -136,122 +151,151 @@ try {
         </div>
 
         <div class="container pb-5">
-            <?php if (isset($error_msg)): ?>
-                <div class="alert alert-danger"><?php echo $error_msg; ?></div>
+
+            <?php if (!empty($error_msg)): ?>
+                <div class="alert alert-danger text-center">
+                    <?php echo htmlspecialchars($error_msg); ?>
+                </div>
             <?php endif; ?>
 
             <div class="row g-4" id="scheduleContainer">
                 <?php if (!empty($schedules)): ?>
                     <?php foreach ($schedules as $row): ?>
+                        <?php
+                        // if class have been fully book, it not display to user
+                        if (isset($row['available_slots']) && $row['available_slots'] <= 0) {
+                            continue;
+                        }
+                        ?>
                         <div class="col-lg-4 col-md-6 schedule-card-item" 
+                             data-name="<?php echo strtolower(htmlspecialchars($row['class_name'])); ?>"
+                             <div class="col-lg-4 col-md-6 schedule-card-item" 
                              data-name="<?php echo strtolower(htmlspecialchars($row['class_name'])); ?>"
                              data-trainer="<?php echo strtolower(htmlspecialchars($row['trainer_name'])); ?>"
                              data-date="<?php echo $row['class_date']; ?>">
 
-                            <div class="card class-card h-100 p-3">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h4 class="class-name mb-0"><?php echo htmlspecialchars($row['class_name']); ?></h4>
-                                        <span class="badge slot-badge bg-info text-dark">
-                                            <i class="bi bi-people-fill me-1"></i><?php echo $row['available_slots']; ?> Left
-                                        </span>
-                                    </div>
+                                <div class="card class-card h-100 p-3">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h4 class="class-name mb-0"><?php echo htmlspecialchars($row['class_name']); ?></h4>
+                                            <span class="badge slot-badge bg-info text-dark">
+                                                <i class="bi bi-people-fill me-1"></i><?php echo htmlspecialchars($row['available_slots']); ?> Left
+                                            </span>
+                                        </div>
 
-                                    <div class="info-item">
-                                        <i class="bi bi-person-badge"></i>
-                                        <span>Trainer: <strong><?php echo htmlspecialchars($row['trainer_name']); ?></strong></span>
-                                    </div>
+                                        <div class="info-item">
+                                            <i class="bi bi-person-badge"></i>
+                                            <span>Trainer: <strong><?php echo htmlspecialchars($row['trainer_name'] ?: 'TBA (To Be Announced)'); ?></strong></span>
+                                        </div>
 
-                                    <div class="info-item">
-                                        <i class="bi bi-calendar3"></i>
-                                        <span>Date: <?php echo date("D, d M Y", strtotime($row['class_date'])); ?></span>
-                                    </div>
+                                        <div class="info-item">
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>Date: <?php echo date("D, d M Y", strtotime($row['class_date'])); ?></span>
+                                        </div>
 
-                                    <div class="info-item">
-                                        <i class="bi bi-clock"></i>
-                                        <span>Time: <?php echo date("H:i", strtotime($row['start_time'])) . " - " . date("H:i", strtotime($row['end_time'])); ?></span>
-                                    </div>
+                                        <div class="info-item">
+                                            <i class="bi bi-clock"></i>
+                                            <span>Time: <?php echo date("H:i", strtotime($row['start_time'])) . " - " . date("H:i", strtotime($row['end_time'])); ?></span>
+                                        </div>
 
-                                    <div class="mt-auto pt-4">
-                                        <?php if ($row['user_booked'] > 0): ?>
-                                            <button class="btn btn-secondary w-100" disabled style="cursor: not-allowed;">
-                                                <i class="bi bi-bookmark-check-fill me-2"></i>ALREADY BOOKED
-                                            </button>
-                                        <?php elseif (isset($row['time_conflict']) && $row['time_conflict'] > 0): ?>
-                                            <button class="btn btn-outline-danger w-100" disabled style="cursor: not-allowed; border-style: dashed;">
-                                                <i class="bi bi-exclamation-triangle me-2"></i>TIME CONFLICT
-                                            </button>
-                                            <small class="text-danger d-block text-center mt-1" style="font-size: 0.7rem;">Overlaps with your schedule</small>
-                                        <?php else: ?>
-                                            <a href="booking.php?id=<?php echo $row['id']; ?>" class="btn btn-purple w-100">
-                                                <i class="bi bi-check2-circle me-2"></i>Book Now
-                                            </a>
-                                        <?php endif; ?>
+                                        <div class="mt-auto pt-4">
+                                            <?php
+                                            // Use the Factory-generated label and the is_free flag from our Model
+                                            $accessLabel = $row['access_type'];
+                                            $isFree = (int) $row['is_free'];
+                                            ?>
+
+                                            <?php if ($row['trainer_id'] == $currentUserId): ?>
+                                                <button class="btn btn-outline-secondary w-100" disabled>
+                                                    <i class="bi bi-person-badge-fill me-2"></i>YOU ARE THE TRAINER
+                                                </button>
+
+                                            <?php elseif ($row['user_booked'] > 0): ?>
+                                                <button class="btn btn-secondary w-100" disabled>
+                                                    <i class="bi bi-bookmark-check-fill me-2"></i>ALREADY BOOKED
+                                                </button>
+
+                                            <?php elseif ($isFree === 0 && $isUserExpired): ?>
+                                                <a href="../View/viewPlans.php?error=must_pay_first" class="btn btn-outline-danger w-100 fw-bold">
+                                                    <i class="bi bi-lock-fill me-2"></i><?php echo $accessLabel; ?>
+                                                </a>
+
+                                            <?php elseif (isset($row['time_conflict']) && $row['time_conflict'] > 0): ?>
+                                                <button class="btn btn-outline-danger w-100" disabled>
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>TIME CONFLICT
+                                                </button>
+                                                <small class="text-danger d-block text-center mt-1" style="font-size: 0.7rem;">Overlaps with your schedule</small>
+
+                                            <?php else: ?>
+                                                <a href="booking.php?id=<?php echo urlencode($row['id']); ?>" class="btn btn-purple w-100">
+                                                    <i class="bi bi-check2-circle me-2"></i>Book Now (<?php echo $accessLabel; ?>)
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="col-12 text-center py-5">
+                            <div class="bg-white p-5 rounded-4 shadow-sm">
+                                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-3 text-muted">No classes with available slots are currently scheduled.</p>
+                            </div>
                         </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="col-12 text-center py-5">
-                        <div class="bg-white p-5 rounded-4 shadow-sm">
-                            <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-                            <p class="mt-3 text-muted">No classes with available slots are currently scheduled.</p>
-                        </div>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+
+                <div id="noResults" class="text-center py-5 d-none">
+                    <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                    <p class="mt-3 text-muted">No classes match your search criteria.</p>
+                </div>
             </div>
 
-            <div id="noResults" class="text-center py-5 d-none">
-                <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
-                <p class="mt-3 text-muted">No classes match your search criteria.</p>
-            </div>
-        </div>
+            <script>
+                const classSearch = document.getElementById('classSearch');
+                const dateFilter = document.getElementById('dateFilter');
+                const cards = document.querySelectorAll('.schedule-card-item');
+                const noResults = document.getElementById('noResults');
 
-        <script>
-            const classSearch = document.getElementById('classSearch');
-            const dateFilter = document.getElementById('dateFilter');
-            const cards = document.querySelectorAll('.schedule-card-item');
-            const noResults = document.getElementById('noResults');
+                function filterCards() {
+                    const searchText = classSearch.value.toLowerCase();
+                    const filterDate = dateFilter.value;
+                    let visibleCount = 0;
 
-            function filterCards() {
-                const searchText = classSearch.value.toLowerCase();
-                const filterDate = dateFilter.value;
-                let visibleCount = 0;
+                    cards.forEach(card => {
+                        const name = card.getAttribute('data-name');
+                        const trainer = card.getAttribute('data-trainer');
+                        const date = card.getAttribute('data-date');
 
-                cards.forEach(card => {
-                    const name = card.getAttribute('data-name');
-                    const trainer = card.getAttribute('data-trainer');
-                    const date = card.getAttribute('data-date');
+                        const matchesText = name.includes(searchText) || trainer.includes(searchText);
+                        const matchesDate = filterDate === "" || date === filterDate;
 
-                    const matchesText = name.includes(searchText) || trainer.includes(searchText);
-                    const matchesDate = filterDate === "" || date === filterDate;
+                        if (matchesText && matchesDate) {
+                            card.classList.remove('d-none');
+                            visibleCount++;
+                        } else {
+                            card.classList.add('d-none');
+                        }
+                    });
 
-                    if (matchesText && matchesDate) {
-                        card.classList.remove('d-none');
-                        visibleCount++;
+                    if (visibleCount === 0) {
+                        noResults.classList.remove('d-none');
                     } else {
-                        card.classList.add('d-none');
+                        noResults.classList.add('d-none');
                     }
-                });
-
-                if (visibleCount === 0) {
-                    noResults.classList.remove('d-none');
-                } else {
-                    noResults.classList.add('d-none');
                 }
-            }
 
-            classSearch.addEventListener('input', filterCards);
-            dateFilter.addEventListener('change', filterCards);
+                classSearch.addEventListener('input', filterCards);
+                dateFilter.addEventListener('change', filterCards);
 
-            function clearFilters() {
-                classSearch.value = "";
-                dateFilter.value = "";
-                filterCards();
-            }
-        </script>
+                function clearFilters() {
+                    classSearch.value = "";
+                    dateFilter.value = "";
+                    filterCards();
+                }
+            </script>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 </html>

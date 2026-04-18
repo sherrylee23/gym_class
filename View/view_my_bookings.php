@@ -3,7 +3,7 @@ session_start();
 
 // Secure Coding: Ensure user is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Member') {
-    header("Location: ../user_management/login.php");
+    header("Location: login.php");
     exit();
 }
 
@@ -16,17 +16,23 @@ $myBookingKey = "GYM_BOOKING_API_2026";
  * Demonstrates linking your module info via URL instead of local file includes.
  */
 function fetchMyBookingsViaService($userId, $key) {
-    // URL pointing to the Provider logic in your Services folder
-    $url = "http://localhost/gym_class/Services/booking_info_service.php?api_key=GYM_BOOKING_API_2026";
-    
-    // Integrative Programming: Fetch JSON data from the service URL
+    $url = "http://localhost/gym_class/Services/booking_info_service.php?api_key=GYM_BOOKING_API_2026&user_id=" . $userId;
+
     $response = @file_get_contents($url);
-    
-    if ($response === false) {
-        return ['error' => 'Integration Error: Could not connect to the Booking Web Service.'];
+
+    // API success
+    if ($response !== false) {
+        $data = json_decode($response, true);
+        if (is_array($data) && !isset($data['error'])) {
+            return $data;
+        }
     }
-    
-    return json_decode($response, true);
+
+    // direct DB
+    require_once('../Model/BookingModel.php');
+    $bookingModel = new BookingModel();
+
+    return $bookingModel->getMemberBookings($userId);
 }
 
 // Consume the web service logic

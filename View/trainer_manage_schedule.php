@@ -1,4 +1,3 @@
-trainer_manage_schedule
 <?php
 require_once('../Model/Schedule.php');
 
@@ -7,14 +6,14 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Trainer') {
-    header("Location: ../user_management/login.php?error=unauthorized");
+    header("Location: ../Model/login.php?error=unauthorized");
     exit();
 }
 
 // delete
 $error_msg = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
-    $url = "http://localhost/gym_class/Services/schedule_service.php";
+    $url = "http://localhost/gym_class/Services/Schedule_service.php";
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -26,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         $result = json_decode($response);
         if (isset($result->status) && $result->status == "success") {
-            // refresh page
             header("Location: trainer_manage_schedule.php?msg=deleted");
             exit();
         } else {
@@ -36,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     curl_close($ch);
 }
 
-// get new class via web service
+// get class list via web service
 $serviceUrl = "http://localhost/gym_class/Services/Schedule_service.php";
 $ch = curl_init($serviceUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -99,7 +97,7 @@ $schedules = json_decode($response, true) ?: [];
     <body>
 
         <div class="container">
-            <a href="../user_management/profile.php" class="back-link">
+            <a href="../View/profile.php" class="back-link">
                 <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
             </a>
 
@@ -110,7 +108,7 @@ $schedules = json_decode($response, true) ?: [];
             <?php endif; ?>
 
             <?php if ($error_msg): ?>
-                <div class="alert alert-danger border-0 shadow-sm mb-4"><?php echo $error_msg; ?></div>
+                <div class="alert alert-danger border-0 shadow-sm mb-4"><?php echo htmlspecialchars($error_msg); ?></div>
             <?php endif; ?>
 
             <div class="d-flex justify-content-between align-items-end mb-4 text-white">
@@ -140,9 +138,14 @@ $schedules = json_decode($response, true) ?: [];
                                     <tr>
                                         <td>
                                             <div class="fw-bold text-dark"><?php echo htmlspecialchars($s['class_name']); ?></div>
-                                            <div class="text-muted small"><i class="bi bi-people me-1"></i>Cap: <?php echo $s['max_capacity']; ?></div>
+                                            <div class="text-muted small">
+                                                <i class="bi bi-people me-1"></i>
+                                                Booked: <?php echo htmlspecialchars($s['booked_count'] ?? '0'); ?> / <?php echo htmlspecialchars($s['max_capacity'] ?? '0'); ?>
+                                            </div>
                                         </td>
-                                        <td><span class="small"><?php echo htmlspecialchars($s['trainer_name']); ?></span></td>
+                                        <td>
+                                            <span class="small"><?php echo htmlspecialchars($s['trainer_name']); ?></span>
+                                        </td>
                                         <td>
                                             <div class="small fw-bold text-purple"><?php echo htmlspecialchars($s['class_date']); ?></div>
                                             <div class="badge bg-light text-dark border fw-normal">
@@ -151,13 +154,20 @@ $schedules = json_decode($response, true) ?: [];
                                         </td>
                                         <td class="text-center">
                                             <?php if ($s['trainer_id'] == $_SESSION['user_id']): ?>
-                                                <form action="trainer_manage_schedule.php" method="POST" onsubmit="return confirm('Delete this class?');">
-                                                    <input type="hidden" name="action" value="delete">
-                                                    <input type="hidden" name="schedule_id" value="<?php echo $s['id']; ?>">
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                                                        <i class="bi bi-trash3 me-1"></i>Delete
-                                                    </button>
-                                                </form>
+                                                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                                    <a href="view_booked_users.php?schedule_id=<?php echo urlencode($s['id']); ?>"
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-people me-1"></i>View Users
+                                                    </a>
+
+                                                    <form action="trainer_manage_schedule.php" method="POST" onsubmit="return confirm('Delete this class?');">
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="schedule_id" value="<?php echo htmlspecialchars($s['id']); ?>">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                            <i class="bi bi-trash3 me-1"></i>Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             <?php else: ?>
                                                 <i class="bi bi-lock-fill text-muted" title="Not your class"></i>
                                             <?php endif; ?>
@@ -165,7 +175,9 @@ $schedules = json_decode($response, true) ?: [];
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr><td colspan="4" class="text-center py-5">No classes scheduled yet.</td></tr>
+                                <tr>
+                                    <td colspan="4" class="text-center py-5">No classes scheduled yet.</td>
+                                </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>

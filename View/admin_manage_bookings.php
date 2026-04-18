@@ -2,14 +2,33 @@
 session_start();
 require_once('../Model/BookingModel.php');
 
-// Security: Only Admins can access this page
+// 1. Security Check: Only Admins can access this page
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
-    header("Location: ../user_management/login.php?error=unauthorized");
+    header("Location: ../Model/login.php?error=unauthorized");
     exit();
 }
 
-$bookingModel = new BookingModel();
-$allBookings = $bookingModel->getAllBookings();
+/**
+ * SECURE CODING PRACTICE: Least Privilege Principle
+ * Consuming the Web Service instead of direct DB access ensures the Admin
+ * interacts with the data through a controlled interface.
+ */
+function fetchAllBookingsForAdmin() {
+    $url = "http://localhost/gym_class/Services/booking_info_service.php?user_id=admin_view_all";
+    
+    // Fetch JSON data from the service URL [cite: 220]
+    $response = @file_get_contents($url);
+    
+    if ($response === false) {
+        return [];
+    }
+    
+    // Turn the JSON string into a PHP array [cite: 221]
+    return json_decode($response, true);
+}
+
+// Fetch global data via the API
+$allBookings = fetchAllBookingsForAdmin();
 ?>
 
 <!DOCTYPE html>
@@ -67,15 +86,8 @@ $allBookings = $bookingModel->getAllBookings();
         .btn-back:hover {
             color: #d1d1d1;
         }
-        /* Custom Badge Colors */
-        .badge-confirmed {
-            background-color: #198754;
-            color: white;
-        }
-        .badge-cancelled {
-            background-color: #6c757d;
-            color: white;
-        }
+        .badge-confirmed { background-color: #198754; color: white; }
+        .badge-cancelled { background-color: #6c757d; color: white; }
     </style>
 </head>
 <body>
@@ -85,7 +97,7 @@ $allBookings = $bookingModel->getAllBookings();
         <div class="col-lg-11">
 
             <div class="mb-3">
-                <a href="../user_management/profile.php" class="btn-back">
+                <a href="../View/profile.php" class="btn-back">
                     <i class="bi bi-arrow-left-circle me-1"></i> Back to Dashboard
                 </a>
             </div>
@@ -100,7 +112,7 @@ $allBookings = $bookingModel->getAllBookings();
                 <div class="card-body p-4">
                     <?php if (isset($_GET['status'])): ?>
                         <div class="alert alert-<?php echo ($_GET['status'] == 'success') ? 'success' : 'danger'; ?> py-2 small mb-3">
-                            <i class="bi bi-info-circle me-2"></i> <?php echo htmlspecialchars($_GET['message'] ?? 'Action Processed'); ?>
+                            <i class="bi bi-info-circle me-2"></i> <?php echo htmlspecialchars($_GET['message'] ?? 'Action Processed', ENT_QUOTES, 'UTF-8'); ?>
                         </div>
                     <?php endif; ?>
 
@@ -126,11 +138,11 @@ $allBookings = $bookingModel->getAllBookings();
                                         ?>
                                         <tr class="booking-row">
                                             <td class="ps-4">
-                                                <div class="fw-bold text-primary"><?php echo htmlspecialchars($b['member_name']); ?></div>
+                                                <div class="fw-bold text-primary"><?php echo htmlspecialchars($b['member_name'], ENT_QUOTES, 'UTF-8'); ?></div>
                                             </td>
                                             <td>
-                                                <div class="fw-bold"><?php echo htmlspecialchars($b['class_name']); ?></div>
-                                                <small class="text-muted">with <?php echo htmlspecialchars($b['trainer_name']); ?></small>
+                                                <div class="fw-bold"><?php echo htmlspecialchars($b['class_name'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <small class="text-muted">with <?php echo htmlspecialchars($b['trainer_name'], ENT_QUOTES, 'UTF-8'); ?></small>
                                             </td>
                                             <td>
                                                 <div class="small fw-bold"><?php echo date("d M Y", strtotime($b['class_date'])); ?></div>
@@ -138,16 +150,14 @@ $allBookings = $bookingModel->getAllBookings();
                                             </td>
                                             <td>
                                                 <span class="badge <?php echo ($b['status'] == 'Confirmed') ? 'badge-confirmed' : 'badge-cancelled'; ?> rounded-pill px-3">
-                                                    <?php echo $b['status']; ?>
+                                                    <?php echo htmlspecialchars($b['status'], ENT_QUOTES, 'UTF-8'); ?>
                                                 </span>
                                             </td>
                                             <td class="text-center">
                                                 <?php if ($b['status'] === 'Cancelled'): ?>
                                                     <i class="bi bi-dash-circle text-muted" title="Already Cancelled"></i>
-                                                    
                                                 <?php elseif ($isStartedOrPast): ?>
                                                     <span class="badge bg-light text-danger border border-danger small">Started / Ended</span>
-
                                                 <?php else: ?>
                                                     <form action="../Services/Booking_service.php" method="POST" onsubmit="return confirm('Admin: Force cancel this booking?');">
                                                         <input type="hidden" name="action" value="cancel">
@@ -174,7 +184,7 @@ $allBookings = $bookingModel->getAllBookings();
                 </div>
 
                 <div class="card-footer bg-light p-3 text-center">
-                    <small class="text-muted">Total Active/Historical Reservations: <?php echo count($allBookings); ?></small>
+                    <small class="text-muted">Total Registered Reservations: <?php echo count($allBookings); ?></small>
                 </div>
             </div>
         </div>
