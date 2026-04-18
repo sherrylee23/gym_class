@@ -119,15 +119,19 @@ $role = $_SESSION['role'];
 
                                 <?php elseif ($role == 'Admin'): ?>
                                     <h5 class="fw-bold text-purple"><i class="bi bi-shield-check me-2"></i>System Administration</h5>
-                                    <p class="text-muted small">Manage all registered users and view system reports.</p>
-                                    <a href="DisplayUsers.php" class="btn btn-purple mt-2">
-                                        <i class="bi bi-people-fill me-2"></i>Manage All Users
-                                    </a>
+                                    <p class="text-muted small">Manage users and oversee system reservations.</p>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <a href="DisplayUsers.php" class="btn btn-purple mt-2">
+                                            <i class="bi bi-people-fill me-1"></i> Manage All Users
+                                        </a>
+                                        <a href="../View/admin_manage_bookings.php" class="btn btn-outline-dark mt-2">
+                                            <i class="bi bi-journal-check me-1"></i> Manage All Bookings
+                                        </a>
+                                    </div>
 
                                 <?php elseif ($role == 'Trainer'): ?>
                                     <h5 class="fw-bold text-purple"><i class="bi bi-calendar3 me-2"></i>Training Schedule</h5>
                                     <p class="text-muted small">Your upcoming sessions and assigned members are listed here.</p>
-
                                     <a href="/gym_class/View/trainer_manage_schedule.php" class="btn btn-purple mt-2">
                                         <i class="bi bi-list-check me-2"></i>View Schedule
                                     </a>
@@ -189,7 +193,7 @@ $role = $_SESSION['role'];
                                             title="Please enter exactly 11 digits"
                                             >
                                     </div>
-                                    <div class="form-text mt-1" style="font-size: 0.65rem;">Must be 10 digits(with dash) or 11 digits(without dash).</div>
+                                    <div class="form-text mt-1" style="font-size: 0.65rem;">Must be 11 digits (e.g., 01234567890).</div>
                                 </div>
 
                                 <div class="mb-4">
