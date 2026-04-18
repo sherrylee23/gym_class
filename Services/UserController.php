@@ -143,10 +143,18 @@ class UserController {
                 $trainerPath = dirname(__DIR__) . '/Model/Trainer.php';
                 if (file_exists($trainerPath)) {
                     require_once($trainerPath);
-
                     $user = $this->facade->getUserById($userId);
+
                     if ($user && class_exists('Trainer')) {
-                        Trainer::create($userId, $user['full_name']);
+                        // check if already is trainer
+                        $db = getDBConnection();
+                        $check = $db->prepare("SELECT COUNT(*) FROM trainers WHERE trainer_id = ?");
+                        $check->execute([$userId]);
+
+                        // inssert when not exist
+                        if ($check->fetchColumn() == 0) {
+                            Trainer::create($userId, $user['full_name']);
+                        }
                     }
                 }
             }

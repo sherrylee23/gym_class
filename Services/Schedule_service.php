@@ -1,79 +1,81 @@
 <?php
+
 require_once('../Model/Schedule.php');
 require_once('../Model/Trainer.php');
 
 header('Content-Type: application/json');
-
 $method = $_SERVER['REQUEST_METHOD'];
 
+// get: expose data (api)
 if ($method === 'GET') {
-    // FIX: Check if the consumer is specifically asking for the trainers list
     if (isset($_GET['fetch']) && $_GET['fetch'] === 'trainers') {
-        $trainers = Trainer::getAll();
-        echo json_encode($trainers ?: []);
+        echo json_encode(Trainer::getAll());
         exit();
     }
 
-    // Default: Fetch all schedules
-    $schedules = Schedule::getAll();
-    echo json_encode($schedules ?: []);
+    if (isset($_GET['trainer_id'])) {
+        echo json_encode(Trainer::findById($_GET['trainer_id']) ?: ['error' => 'Not found']);
+        exit();
+    }
+
+    // return all schedules (protected)
+    echo json_encode(Schedule::getAll());
     exit();
 }
 
+// post: manage actions
 if ($method === 'POST') {
-    // delete class
+    // Delete Action
     if (isset($_POST['action']) && $_POST['action'] === 'delete') {
-        $id = $_POST['schedule_id'];
-        if (Schedule::delete($id)) {
-            echo json_encode(['status' => 'success', 'message' => 'Schedule deleted successfully!']);
+        if (Schedule::delete($_POST['schedule_id'])) {
+            echo json_encode(['status' => 'success', 'message' => 'Deleted!']);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Database error during deletion.']);
+            echo json_encode(['status' => 'error', 'message' => 'Failed.']);
         }
         exit();
     }
 
-    // add class
+    // Add Action
     if (isset($_POST['class_name'])) {
-        $t_id  = $_POST['trainer_id'];
-        $name  = $_POST['class_name'];
-        $date  = $_POST['class_date'];
-        $start = $_POST['start_time'];
-        $end   = $_POST['end_time'];
-        $max   = isset($_POST['max_capacity']) ? $_POST['max_capacity'] : 20;
+        $newSched = new Schedule();
 
-        // check time validation
-        if (strtotime($end) <= strtotime($start)) {
-            echo json_encode(['status' => 'error', 'message' => 'End time must be after start time.']);
+        // Apply Mass Assignment Security
+        $newSched->safeFill($_POST);
+
+        // date time validation
+        $currentDateTime = time(); // Get current timestamp
+        $inputDateTime = strtotime($newSched->class_date . ' ' . $newSched->start_time);
+
+        if ($inputDateTime < $currentDateTime) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Error: This time slot alrady pass, please create a future time slot. Thanks'
+            ]);
+            exit();
+        }
+        // logic
+        if (empty($newSched->max_capacity))
+            $newSched->max_capacity = 20;
+        if (!isset($_POST['is_free']))
+            $newSched->is_free = 0;
+
+        // Validation for start and end duration
+        if (strtotime($newSched->end_time) <= strtotime($newSched->start_time)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid time range: End time must be after start time.']);
             exit();
         }
 
-        // handle duplicate class and time
-        if (Schedule::isConflict($name, $date, $start, $end)) {
-            echo json_encode([
-                'status' => 'error', 
-                'message' => "Sorry, A $name class already exists at this time slot."
-            ]);
-            exit(); 
-        } 
-        
-        // save
-        $newSched = new Schedule();
-        $newSched->trainer_id = $t_id;
-        $newSched->class_name = $name;
-        $newSched->class_date = $date;
-        $newSched->start_time = $start;
-        $newSched->end_time   = $end;
-        $newSched->max_capacity = $max;
-        
-        $newSched->is_free = isset($_POST['is_free']) ? $_POST['is_free'] : 0;
+        // Check for double-booking --> conflicts
+        if (Schedule::isConflict($newSched->class_name, $newSched->class_date, $newSched->start_time, $newSched->end_time)) {
+            echo json_encode(['status' => 'error', 'message' => 'Sorry, this time slot have been schedule to another trainers.']);
+            exit();
+        }
 
         if ($newSched->save()) {
-            echo json_encode(['status' => 'success', 'message' => 'Schedule added successfully!']);
+            echo json_encode(['status' => 'success', 'message' => 'Schedule saved successfully!']);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Database error during save.']);
+            echo json_encode(['status' => 'error', 'message' => 'Database error: Could not save schedule.']);
         }
-        
         exit();
     }
 }
-?>

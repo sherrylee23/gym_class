@@ -1,5 +1,15 @@
 <?php
 require_once('../Services/UserController.php');
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Generate CSRF token if it does not exist
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 $error_message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -21,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <style>
             body {
                 font-family: 'Poppins', sans-serif;
-                background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* Purple Gradient */
+                background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
                 height: 100vh;
                 display: flex;
                 align-items: center;
@@ -33,7 +43,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 overflow: hidden;
                 border: none;
             }
-            /* Style for the Big Logo Section */
             .logo-section {
                 background-color: #6f42c1;
                 padding: 30px;
@@ -88,12 +97,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <?php if (!empty($error_message)): ?>
                                 <div class="alert alert-danger alert-dismissible fade show small" role="alert">
                                     <i class="bi bi-exclamation-circle-fill me-2"></i>
-                                    <?php echo $error_message; ?>
+                                    <?php echo htmlspecialchars($error_message); ?>
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             <?php endif; ?>
 
                             <form method="POST">
+                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+
                                 <div class="mb-3">
                                     <label class="form-label small fw-bold">FULL NAME</label>
                                     <div class="input-group">
@@ -124,7 +135,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             minlength="11"
                                             pattern="\d{11}"
                                             title="Please enter exactly 11 numbers without dash"
-                                            >
+                                        >
                                     </div>
                                 </div>
 
