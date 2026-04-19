@@ -1,4 +1,7 @@
 <?php
+// author: Koh Zhi Qian
+
+
 session_start();
 require_once('../Model/BookingModel.php');
 

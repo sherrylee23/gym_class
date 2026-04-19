@@ -1,4 +1,6 @@
 <?php
+// author: Koh Zhi Qian
+
 session_start();
 
 // Secure Coding: Ensure user is logged in

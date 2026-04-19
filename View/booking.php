@@ -1,4 +1,6 @@
 <?php
+// author: Koh Zhi Qian
+
 session_start();
 require_once('../Model/Schedule.php');
 require_once('../Model/Database.php');

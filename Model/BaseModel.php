@@ -1,4 +1,7 @@
 <?php
+// author: Koh Zhi Qian
+
+
 require_once('Database.php');
 
 abstract class BaseModel {

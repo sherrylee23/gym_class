@@ -1,4 +1,6 @@
 <?php
+// author: Lee Xin Ying
+
 session_start();
 require_once('../Model/Database.php');
 require_once('../Model/Schedule.php');

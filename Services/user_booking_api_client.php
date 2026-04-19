@@ -1,4 +1,6 @@
 <?php
+// author: Koh Zhi Qian
+
 
 function getBookingHistory($userId) {
     $url = "http://localhost/gym_class/Services/booking_info_service.php?user_id=" . urlencode($userId);

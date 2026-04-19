@@ -1,4 +1,6 @@
 <?php
+// author: Cheok Jia Xuen
+
 require_once('UserModel.php');
 
 class UserFacade {

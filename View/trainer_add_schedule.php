@@ -1,4 +1,6 @@
 <?php
+// author: Lee Xin Ying
+
 require_once('../Model/Trainer.php');
 
 if (session_status() === PHP_SESSION_NONE) {

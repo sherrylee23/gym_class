@@ -1,4 +1,6 @@
 <?php
+// author: Lee Xin Ying
+
 require_once('../Model/Database.php');
 
 header('Content-Type: application/json');

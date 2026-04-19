@@ -1,4 +1,6 @@
 <?php
+// author: Lee Xin Ying
+
 require_once('Database.php');
 
 class Trainer {

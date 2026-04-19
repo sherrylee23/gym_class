@@ -1,4 +1,6 @@
 <?php
+// author: Cheok Jia Xuen
+
 header('Content-Type: application/json');
 require_once('../Model/UserFacade.php');
 

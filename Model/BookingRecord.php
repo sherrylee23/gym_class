@@ -1,4 +1,7 @@
 <?php
+// author: Koh Zhi Qian
+
+
 require_once('BaseModel.php');
 
 class BookingRecord extends BaseModel {

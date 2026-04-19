@@ -1,4 +1,6 @@
 <?php
+// author: Cheok Jia Xuen
+
 require_once('../Model/Database.php');
 
 header('Content-Type: application/json');

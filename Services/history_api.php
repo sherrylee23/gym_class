@@ -1,4 +1,6 @@
 <?php
+// author: Loh Yee Kee
+
 // File: Services/history_api.php
 error_reporting(0);
 header('Content-Type: application/json');

@@ -1,6 +1,8 @@
 <?php
+// author: Koh Zhi Qian
 
-// ✅ FIX: Start session (THIS IS THE ROOT CAUSE)
+
+// Start session (THIS IS THE ROOT CAUSE)
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

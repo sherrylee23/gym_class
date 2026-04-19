@@ -1,4 +1,6 @@
 <?php
+// author: Loh Yee Kee
+
 // Prevent the session_start() warning
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

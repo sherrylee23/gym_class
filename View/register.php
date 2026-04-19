@@ -1,4 +1,6 @@
 <?php
+// author: Cheok Jia Xuen
+
 require_once('../Services/UserController.php');
 
 if (session_status() === PHP_SESSION_NONE) {

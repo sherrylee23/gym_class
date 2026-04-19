@@ -1,4 +1,5 @@
 <?php
+// author: Lee Xin Ying
 
 require_once('../Model/Schedule.php');
 require_once('../Model/Trainer.php');

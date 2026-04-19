@@ -1,4 +1,6 @@
 <?php
+// author: Loh Yee Kee
+
 require_once('Database.php');
 
 //2.4.1 View Membership Plans
