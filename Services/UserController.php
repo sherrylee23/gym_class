@@ -99,6 +99,9 @@ class UserController {
         $name = trim($data['full_name'] ?? '');
         $phone = trim($data['phone_number'] ?? '');
         $password = !empty($data['password']) ? $data['password'] : null;
+        $specialty = isset($data['specialty']) ? trim($data['specialty']) : null;
+
+        $allowedSpecialties = ['HIIT', 'Dance', 'Zumba', 'Yoga'];
 
         if (empty($name) || empty($phone)) {
             return "Please fill in all required fields.";
@@ -111,6 +114,17 @@ class UserController {
         $result = $this->facade->updateUserProfile($_SESSION['user_id'], $name, $phone, $password);
 
         if ($result) {
+            // if is trainner and speciality not null, update
+            if ($_SESSION['role'] === 'Trainer' && $specialty !== null) {
+                if (!in_array($specialty, $allowedSpecialties)) {
+                    return "Error: Invalid specialty selected.";
+                }
+
+                $db = getDBConnection();
+                $stmt = $db->prepare("UPDATE trainers SET specialty = ? WHERE trainer_id = ?");
+                $stmt->execute([$specialty, $_SESSION['user_id']]);
+            }
+
             $_SESSION['user_name'] = $name;
             header("Location: profile.php?update=success");
             exit;

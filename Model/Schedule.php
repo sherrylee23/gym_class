@@ -20,18 +20,18 @@ class Schedule {
         $currentDate = date('Y-m-d');
         $currentTime = date('H:i:s');
 
-        $sql = "SELECT s.*, t.full_name as trainer_name, 
-            (SELECT COUNT(*) FROM bookings b WHERE b.schedule_id = s.id AND b.status = 'Confirmed') as booked_count,
-            (SELECT COUNT(*) FROM bookings b3 WHERE b3.schedule_id = s.id AND b3.user_id = ? AND b3.status = 'Confirmed') as user_booked,
-            (SELECT COUNT(*) FROM bookings b4 
-             JOIN schedules s2 ON b4.schedule_id = s2.id 
-             WHERE b4.user_id = ? AND b4.status = 'Confirmed' AND s2.class_date = s.class_date
-             AND (s.start_time < s2.end_time AND s.end_time > s2.start_time)
-            ) as time_conflict
-            FROM schedules s 
-            LEFT JOIN trainers t ON s.trainer_id = t.trainer_id
-            WHERE (s.class_date > ? OR (s.class_date = ? AND s.start_time > ?))
-            GROUP BY s.id ORDER BY s.class_date, s.start_time";
+        $sql = "SELECT s.*, t.full_name as trainer_name, t.specialty, 
+        (SELECT COUNT(*) FROM bookings b WHERE b.schedule_id = s.id AND b.status = 'Confirmed') as booked_count,
+        (SELECT COUNT(*) FROM bookings b3 WHERE b3.schedule_id = s.id AND b3.user_id = ? AND b3.status = 'Confirmed') as user_booked,
+        (SELECT COUNT(*) FROM bookings b4 
+         JOIN schedules s2 ON b4.schedule_id = s2.id 
+         WHERE b4.user_id = ? AND b4.status = 'Confirmed' AND s2.class_date = s.class_date
+         AND (s.start_time < s2.end_time AND s.end_time > s2.start_time)
+        ) as time_conflict
+        FROM schedules s 
+        LEFT JOIN trainers t ON s.trainer_id = t.trainer_id
+        WHERE (s.class_date > ? OR (s.class_date = ? AND s.start_time > ?))
+        GROUP BY s.id ORDER BY s.class_date, s.start_time";
 
         $stmt = $db->prepare($sql);
         $stmt->execute([$currentUserId, $currentUserId, $currentDate, $currentDate, $currentTime]);
@@ -47,6 +47,7 @@ class Schedule {
                 'trainer_id' => $item['trainer_id'],
                 'class_name' => htmlspecialchars($item['class_name']),
                 'trainer_name' => htmlspecialchars($item['trainer_name']),
+                'specialty' => htmlspecialchars($item['specialty'] ?? 'General'),
                 'class_date' => $item['class_date'],
                 'start_time' => $item['start_time'],
                 'end_time' => $item['end_time'],

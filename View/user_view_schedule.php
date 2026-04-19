@@ -170,132 +170,140 @@ try {
                         <div class="col-lg-4 col-md-6 schedule-card-item" 
                              data-name="<?php echo strtolower(htmlspecialchars($row['class_name'])); ?>"
                              <div class="col-lg-4 col-md-6 schedule-card-item" 
-                             data-name="<?php echo strtolower(htmlspecialchars($row['class_name'])); ?>"
-                             data-trainer="<?php echo strtolower(htmlspecialchars($row['trainer_name'])); ?>"
-                             data-date="<?php echo $row['class_date']; ?>">
+                             <div class="col-lg-4 col-md-6 schedule-card-item" 
+                                 data-name="<?php echo strtolower(htmlspecialchars($row['class_name'])); ?>"
+                                 data-trainer="<?php echo strtolower(htmlspecialchars($row['trainer_name'])); ?>"
+                                 data-specialty="<?php echo strtolower(htmlspecialchars($row['specialty'])); ?>" 
+                                 data-date="<?php echo $row['class_date']; ?>">
 
-                                <div class="card class-card h-100 p-3">
-                                    <div class="card-body d-flex flex-column">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h4 class="class-name mb-0"><?php echo htmlspecialchars($row['class_name']); ?></h4>
-                                            <span class="badge slot-badge bg-info text-dark">
-                                                <i class="bi bi-people-fill me-1"></i><?php echo htmlspecialchars($row['available_slots']); ?> Left
-                                            </span>
-                                        </div>
+                                    <div class="card class-card h-100 p-3">
+                                        <div class="card-body d-flex flex-column">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h4 class="class-name mb-0"><?php echo htmlspecialchars($row['class_name']); ?></h4>
+                                                <span class="badge slot-badge bg-info text-dark">
+                                                    <i class="bi bi-people-fill me-1"></i><?php echo htmlspecialchars($row['available_slots']); ?> Left
+                                                </span>
+                                            </div>
 
-                                        <div class="info-item">
-                                            <i class="bi bi-person-badge"></i>
-                                            <span>Trainer: <strong><?php echo htmlspecialchars($row['trainer_name'] ?: 'TBA (To Be Announced)'); ?></strong></span>
-                                        </div>
+                                            <div class="info-item">
+                                                <i class="bi bi-person-badge"></i>
+                                                <span>Trainer: <strong><?php echo htmlspecialchars($row['trainer_name'] ?: 'TBA'); ?></strong></span>
 
-                                        <div class="info-item">
-                                            <i class="bi bi-calendar3"></i>
-                                            <span>Date: <?php echo date("D, d M Y", strtotime($row['class_date'])); ?></span>
-                                        </div>
+                                                <?php if (!empty($row['specialty'])): ?>
+                                                    <span class="badge rounded-pill bg-light text-purple border border-purple-subtle ms-1" style="font-size: 0.7rem; color: #6f42c1;">
+                                                        <i class="bi bi-patch-check-fill me-1"></i><?php echo $row['specialty']; ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
 
-                                        <div class="info-item">
-                                            <i class="bi bi-clock"></i>
-                                            <span>Time: <?php echo date("H:i", strtotime($row['start_time'])) . " - " . date("H:i", strtotime($row['end_time'])); ?></span>
-                                        </div>
+                                            <div class="info-item">
+                                                <i class="bi bi-calendar3"></i>
+                                                <span>Date: <?php echo date("D, d M Y", strtotime($row['class_date'])); ?></span>
+                                            </div>
 
-                                        <div class="mt-auto pt-4">
-                                            <?php
-                                            // Use the Factory-generated label and the is_free flag from our Model
-                                            $accessLabel = $row['access_type'];
-                                            $isFree = (int) $row['is_free'];
-                                            ?>
+                                            <div class="info-item">
+                                                <i class="bi bi-clock"></i>
+                                                <span>Time: <?php echo date("H:i", strtotime($row['start_time'])) . " - " . date("H:i", strtotime($row['end_time'])); ?></span>
+                                            </div>
 
-                                            <?php if ($row['trainer_id'] == $currentUserId): ?>
-                                                <button class="btn btn-outline-secondary w-100" disabled>
-                                                    <i class="bi bi-person-badge-fill me-2"></i>YOU ARE THE TRAINER
-                                                </button>
+                                            <div class="mt-auto pt-4">
+                                                <?php
+                                                // Use the Factory-generated label and the is_free flag from our Model
+                                                $accessLabel = $row['access_type'];
+                                                $isFree = (int) $row['is_free'];
+                                                ?>
 
-                                            <?php elseif ($row['user_booked'] > 0): ?>
-                                                <button class="btn btn-secondary w-100" disabled>
-                                                    <i class="bi bi-bookmark-check-fill me-2"></i>ALREADY BOOKED
-                                                </button>
+                                                <?php if ($row['trainer_id'] == $currentUserId): ?>
+                                                    <button class="btn btn-outline-secondary w-100" disabled>
+                                                        <i class="bi bi-person-badge-fill me-2"></i>YOU ARE THE TRAINER
+                                                    </button>
 
-                                            <?php elseif ($isFree === 0 && $isUserExpired): ?>
-                                                <a href="../View/viewPlans.php?error=must_pay_first" class="btn btn-outline-danger w-100 fw-bold">
-                                                    <i class="bi bi-lock-fill me-2"></i><?php echo $accessLabel; ?>
-                                                </a>
+                                                <?php elseif ($row['user_booked'] > 0): ?>
+                                                    <button class="btn btn-secondary w-100" disabled>
+                                                        <i class="bi bi-bookmark-check-fill me-2"></i>ALREADY BOOKED
+                                                    </button>
 
-                                            <?php elseif (isset($row['time_conflict']) && $row['time_conflict'] > 0): ?>
-                                                <button class="btn btn-outline-danger w-100" disabled>
-                                                    <i class="bi bi-exclamation-triangle me-2"></i>TIME CONFLICT
-                                                </button>
-                                                <small class="text-danger d-block text-center mt-1" style="font-size: 0.7rem;">Overlaps with your schedule</small>
+                                                <?php elseif ($isFree === 0 && $isUserExpired): ?>
+                                                    <a href="../View/viewPlans.php?error=must_pay_first" class="btn btn-outline-danger w-100 fw-bold">
+                                                        <i class="bi bi-lock-fill me-2"></i><?php echo $accessLabel; ?>
+                                                    </a>
 
-                                            <?php else: ?>
-                                                <a href="booking.php?id=<?php echo urlencode($row['id']); ?>" class="btn btn-purple w-100">
-                                                    <i class="bi bi-check2-circle me-2"></i>Book Now (<?php echo $accessLabel; ?>)
-                                                </a>
-                                            <?php endif; ?>
+                                                <?php elseif (isset($row['time_conflict']) && $row['time_conflict'] > 0): ?>
+                                                    <button class="btn btn-outline-danger w-100" disabled>
+                                                        <i class="bi bi-exclamation-triangle me-2"></i>TIME CONFLICT
+                                                    </button>
+                                                    <small class="text-danger d-block text-center mt-1" style="font-size: 0.7rem;">Overlaps with your schedule</small>
+
+                                                <?php else: ?>
+                                                    <a href="booking.php?id=<?php echo urlencode($row['id']); ?>" class="btn btn-purple w-100">
+                                                        <i class="bi bi-check2-circle me-2"></i>Book Now (<?php echo $accessLabel; ?>)
+                                                    </a>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="col-12 text-center py-5">
+                                <div class="bg-white p-5 rounded-4 shadow-sm">
+                                    <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                                    <p class="mt-3 text-muted">No classes with available slots are currently scheduled.</p>
+                                </div>
                             </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="col-12 text-center py-5">
-                            <div class="bg-white p-5 rounded-4 shadow-sm">
-                                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-                                <p class="mt-3 text-muted">No classes with available slots are currently scheduled.</p>
-                            </div>
-                        </div>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <div id="noResults" class="text-center py-5 d-none">
+                        <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                        <p class="mt-3 text-muted">No classes match your search criteria.</p>
+                    </div>
                 </div>
 
-                <div id="noResults" class="text-center py-5 d-none">
-                    <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
-                    <p class="mt-3 text-muted">No classes match your search criteria.</p>
-                </div>
-            </div>
+                <script>
+                    const classSearch = document.getElementById('classSearch');
+                    const dateFilter = document.getElementById('dateFilter');
+                    const cards = document.querySelectorAll('.schedule-card-item');
+                    const noResults = document.getElementById('noResults');
 
-            <script>
-                const classSearch = document.getElementById('classSearch');
-                const dateFilter = document.getElementById('dateFilter');
-                const cards = document.querySelectorAll('.schedule-card-item');
-                const noResults = document.getElementById('noResults');
+                    function filterCards() {
+                        const searchText = classSearch.value.toLowerCase();
+                        const filterDate = dateFilter.value;
+                        let visibleCount = 0;
 
-                function filterCards() {
-                    const searchText = classSearch.value.toLowerCase();
-                    const filterDate = dateFilter.value;
-                    let visibleCount = 0;
+                        cards.forEach(card => {
+                            const name = card.getAttribute('data-name');
+                            const trainer = card.getAttribute('data-trainer');
+                            const date = card.getAttribute('data-date');
 
-                    cards.forEach(card => {
-                        const name = card.getAttribute('data-name');
-                        const trainer = card.getAttribute('data-trainer');
-                        const date = card.getAttribute('data-date');
+                            const matchesText = name.includes(searchText) || trainer.includes(searchText);
+                            const matchesDate = filterDate === "" || date === filterDate;
 
-                        const matchesText = name.includes(searchText) || trainer.includes(searchText);
-                        const matchesDate = filterDate === "" || date === filterDate;
+                            if (matchesText && matchesDate) {
+                                card.classList.remove('d-none');
+                                visibleCount++;
+                            } else {
+                                card.classList.add('d-none');
+                            }
+                        });
 
-                        if (matchesText && matchesDate) {
-                            card.classList.remove('d-none');
-                            visibleCount++;
+                        if (visibleCount === 0) {
+                            noResults.classList.remove('d-none');
                         } else {
-                            card.classList.add('d-none');
+                            noResults.classList.add('d-none');
                         }
-                    });
-
-                    if (visibleCount === 0) {
-                        noResults.classList.remove('d-none');
-                    } else {
-                        noResults.classList.add('d-none');
                     }
-                }
 
-                classSearch.addEventListener('input', filterCards);
-                dateFilter.addEventListener('change', filterCards);
+                    classSearch.addEventListener('input', filterCards);
+                    dateFilter.addEventListener('change', filterCards);
 
-                function clearFilters() {
-                    classSearch.value = "";
-                    dateFilter.value = "";
-                    filterCards();
-                }
-            </script>
+                    function clearFilters() {
+                        classSearch.value = "";
+                        dateFilter.value = "";
+                        filterCards();
+                    }
+                </script>
 
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    </body>
-</html>
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                </body>
+                </html>
